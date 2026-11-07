@@ -146,7 +146,7 @@ body.touch #keys{display:none}
 <!-- ONLINE -->
 <div id="online" class="screen"><div class="wrap">
   <h2>Partido online</h2>
-  <div class="note">Cada uno juega con su jugador y tiene un bot de compañero. Para que tu rival pueda entrar, comparte el juego con él desde claude.ai.</div>
+  <div class="note">Cada uno juega con su jugador y tiene un bot de compañero. Uno crea la sala y le pasa el código de 4 letras al otro.</div>
   <h3>Tu jugador</h3><div class="cards" id="pkOn"></div>
   <div class="row">
     <div class="panel"><h3>Crear sala</h3><div class="opts"><h3>Duración</h3><div class="seg" id="sgLenOn"></div><h3>Punto de oro</h3><div class="seg" id="sgGoldOn"></div></div><button class="big pri" id="bHost">Crear sala</button></div>
@@ -659,13 +659,53 @@ document.querySelectorAll('.sb').forEach(b=>{
 /* ============ ONLINE ============ */
 const NET={r:null,role:null,code:'',guestPeer:null,lastK:null,k:0,s:'normal',sendT:0,lastSeen:0,lastSt:null,evPrev:null,msgPrev:-1,seq:0,lost:false,unsub:null,cfgKey:''};
 async function getRoom(){try{if(!window.claude||typeof window.claude.use!=='function')return null;return await window.claude.use('room');}catch(e){return null;}}
+/* ---- conexión directa entre dispositivos (PeerJS / WebRTC) para la web pública ---- */
+let PJ_LOADING=null;
+function loadPeerJS(){if(window.Peer)return Promise.resolve();if(PJ_LOADING)return PJ_LOADING;
+  PJ_LOADING=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';s.onload=()=>res();s.onerror=()=>{PJ_LOADING=null;rej(new Error('load'));};document.head.appendChild(s);});return PJ_LOADING;}
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'},
+  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}]};
+function peerRoom(name,role){
+  return new Promise(async(resolve,reject)=>{
+    try{await loadPeerJS();}catch(e){reject({code:'no_lib'});return;}
+    const id='laorden-'+name;let mine={},remote=null,conn=null,lis=[],done=false,peer;
+    const room={name,
+      presence(p){for(const k in p){if(p[k]===null)delete mine[k];else mine[k]=p[k];}if(conn&&conn.open){try{conn.send(mine);}catch(e){}}return Promise.resolve();},
+      peers(){const a=[{peer:'me',presence:mine,sameTab:true,isMe:true}];if(remote)a.push({peer:'remote',presence:remote,sameTab:false,isMe:false});return a;},
+      onPeers(f){lis.push(f);setTimeout(()=>f({peers:room.peers(),joined:[],left:[],updated:[]}),0);return()=>{lis=lis.filter(x=>x!==f);};},
+      leave(){try{conn&&conn.close();}catch(e){}try{peer&&peer.destroy();}catch(e){}return Promise.resolve();},
+      connected(){return !!(conn&&conn.open);}};
+    const fire=()=>{const ps=room.peers();lis.forEach(f=>{try{f({peers:ps,joined:[],left:[],updated:[]});}catch(e){}});};
+    const attach=c=>{if(conn&&conn!==c){try{conn.close();}catch(e){}}conn=c;
+      c.on('open',()=>{try{c.send(mine);}catch(e){}});
+      c.on('data',d=>{if(d&&typeof d==='object'&&!Array.isArray(d)){const ch=!remote||remote.r!==d.r||remote.c!==d.c;remote=d;if(ch)fire();}});
+      c.on('close',()=>{if(conn===c){conn=null;remote=null;fire();}});c.on('error',()=>{});};
+    try{peer=role==='host'?new Peer(id,{config:ICE}):new Peer({config:ICE});}catch(e){reject({code:'net'});return;}
+    peer.on('open',()=>{
+      if(role==='host'){done=true;resolve(room);return;}
+      const c=peer.connect(id,{serialization:'json'});attach(c);
+      c.on('open',()=>{if(!done){done=true;resolve(room);}});
+      setTimeout(()=>{if(!done){done=true;reject({code:'not_found'});try{peer.destroy();}catch(e){}}},15000);
+    });
+    peer.on('connection',c=>{if(role==='host')attach(c);});
+    peer.on('error',e=>{const t=e&&e.type;if(!done){done=true;reject({code:t==='unavailable-id'?'taken':t==='peer-unavailable'?'not_found':'net'});try{peer.destroy();}catch(_){}}});
+    peer.on('disconnected',()=>{try{if(!peer.destroyed)peer.reconnect();}catch(e){}});
+  });
+}
+async function joinRoom(name,role){const room=await getRoom();if(room)return room.join(name);return peerRoom(name,role);}
+const NET_ERR={no_lib:'No se pudo cargar la conexión online. Revisa tu internet.',taken:'Ese código ya está en uso. Prueba otra vez.',not_found:'No encuentro esa sala. Revisa el código y que tu rival la tenga abierta.',net:'No se pudo conectar. Revisa tu internet y prueba otra vez.'};
+const netErrMsg=e=>NET_ERR[e&&e.code]||('No se pudo conectar ('+(e&&e.code||'error')+').');
 function netLeave(){try{NET.unsub&&NET.unsub();}catch(e){}try{NET.r&&NET.r.leave().catch(()=>{});}catch(e){}Object.assign(NET,{r:null,role:null,guestPeer:null,lastSt:null,lastK:null,lost:false,unsub:null,cfgKey:'',msgPrev:-1,evPrev:null});}
 function randCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ';let s='';for(let i=0;i<4;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
 async function hostCreate(){
   audioInit();$('#onErr').textContent='';
-  const room=await getRoom();if(!room){$('#onErr').textContent='El modo online todavía no funciona en esta versión web: de momento solo va abriendo el juego desde claude.ai. Pronto lo añadiremos aquí.';return;}
-  const code=randCode();
-  try{NET.r=await room.join('padel-'+code.toLowerCase());}catch(e){$('#onErr').textContent='No se pudo crear la sala ('+(e&&e.code||'error')+'). Prueba otra vez.';return;}
+  $('#onErr').textContent='Creando sala…';
+  let code=randCode();
+  try{NET.r=await joinRoom('padel-'+code.toLowerCase(),'host');}
+  catch(e){if(e&&e.code==='taken'){code=randCode();try{NET.r=await joinRoom('padel-'+code.toLowerCase(),'host');}catch(e2){$('#onErr').textContent=netErrMsg(e2);return;}}else{$('#onErr').textContent=netErrMsg(e);return;}}
+  $('#onErr').textContent='';
   NET.role='host';NET.code=code;NET.lastSeen=performance.now();
   NET.r.presence({r:'h',c:ON.me}).catch(()=>{});
   $('#waitT').textContent='Esperando rival…';$('#waitCode').textContent=code;
@@ -686,8 +726,9 @@ async function guestJoin(){
   audioInit();$('#onErr').textContent='';
   const code=($('#inCode').value||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(code.length!==4){$('#onErr').textContent='El código tiene 4 letras.';return;}
-  const room=await getRoom();if(!room){$('#onErr').textContent='El modo online todavía no funciona en esta versión web: de momento solo va abriendo el juego desde claude.ai.';return;}
-  try{NET.r=await room.join('padel-'+code.toLowerCase());}catch(e){$('#onErr').textContent='No se pudo entrar en la sala ('+(e&&e.code||'error')+').';return;}
+  $('#onErr').textContent='Conectando…';
+  try{NET.r=await joinRoom('padel-'+code.toLowerCase(),'guest');}catch(e){$('#onErr').textContent=netErrMsg(e);return;}
+  $('#onErr').textContent='';
   NET.role='guest';NET.code=code;NET.k=0;NET.lastSeen=performance.now();
   NET.r.presence({r:'g',c:ON.me,x:15,y:5,k:0,s:'normal'}).catch(()=>{});
   $('#waitT').textContent='Conectando…';$('#waitCode').textContent=code;$('#waitN').textContent='Esperando a que el anfitrión empiece el partido.';
