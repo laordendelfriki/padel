@@ -154,6 +154,8 @@ body.touch #ctrl{display:block}
 .sb.dn{transform:scale(.9)}
 .sb.glow{box-shadow:0 0 0 4px var(--acc),0 0 24px var(--acc);animation:pul .5s infinite alternate}
 @keyframes pul{to{box-shadow:0 0 0 7px var(--acc),0 0 34px var(--acc)}}
+#bServe{display:none;top:20px;left:40px;width:110px;height:110px;font-size:17px;background:rgba(216,255,62,.85);color:#111;border-color:#fff;box-shadow:0 0 0 6px rgba(216,255,62,.25)}
+body.serving #bServe{display:flex}body.serving .sb:not(#bServe){opacity:0;pointer-events:none}
 #bRem{top:0;left:78px;width:76px;height:76px;background:rgba(230,57,70,.62)}
 #bGlo{top:64px;left:0;width:72px;height:72px;background:rgba(57,170,255,.55)}
 #bNor{top:58px;right:0;width:86px;height:86px;background:rgba(216,255,62,.62);color:#111;text-shadow:none}
@@ -376,6 +378,7 @@ body.touch #keys{display:none}
       <div class="sb" id="bGlo" data-shot="globo">GLOBO</div>
       <div class="sb" id="bNor" data-shot="bandeja">BANDEJA</div>
       <div class="sb" id="bDej" data-shot="dejada">DEJADA</div>
+      <div class="sb" id="bServe" data-shot="bandeja">SACAR</div>
     </div>
   </div>
   <div id="keys"><kbd>WASD</kbd> mover · <kbd>J</kbd> bandeja · <kbd>K</kbd> globo · <kbd>L</kbd> dejada · <kbd>I</kbd> remate · <kbd>P</kbd> pausa · <kbd>1</kbd>-<kbd>0</kbd> emojis</div>
@@ -400,7 +403,7 @@ const inDoorX=(x,t,m)=>x>DOORS[t][0]+m&&x<DOORS[t][1]-m;
 // side: 'drive' (derecha) o 'reves' (izquierda). Rasgos físicos aproximados a partir de información pública.
 const CHARS={
   xavi:  {name:'Xavi',  num:14,h:1.69,side:'drive',shirt:'#e63946',shirt2:'#ffffff',shorts:'#1b1d2e',hair:'#2b1a10',style:'short',beard:'stubble',skin:'#eebf98',shoe:'#fafafa',shoeAcc:'#e63946',rk:'#1a1a1a',spd:1.0, pow:1.05,ctl:1.0, tag:'La Orden'},
-  chilvi:{name:'Chilvi',num:7, h:1.74,side:'reves',brow:'#6b5a3e',shirt:'#2ec4b6',shirt2:'#0b3c49',shorts:'#14213d',hair:'#ece6d2',hairRoot:'#8a7a5a',style:'cani',earring:true,skin:'#d9a27a',shoe:'#ffffff',shoeAcc:'#ff006e',rk:'#ff006e',spd:1.15,pow:0.9, ctl:1.0, tag:'La Orden'},
+  chilvi:{name:'Chilvi',num:7, h:1.74,side:'reves',brow:'#6b5a3e',shirt:'#2ec4b6',shirt2:'#0b3c49',shorts:'#14213d',hair:'#ece6d2',hairRoot:'#8a7a5a',style:'cani',earring:true,skin:'#d9a27a',shoe:'#ffffff',shoeAcc:'#ff006e',rk:'#ff006e',spd:1.12,pow:1.22, ctl:1.0, tag:'La Orden'},
   // 1 · Coello / Tapia
   coello:{name:'Coello',full:'Arturo Coello',num:1,h:1.90,lefty:true,side:'drive',rank:1,pts:21906,shirt:'#1d1d1d',shirt2:'#f4d03f',collar:'round',shorts:'#1d1d1d',hair:'#5a3d26',style:'short',skin:'#efc8a5',shoe:'#ffffff',shoeAcc:'#f4d03f',rk:'#151515',rk2:'#f4d03f',rkHole:'rgba(255,255,255,0.22)',spd:1.08,pow:1.28,ctl:1.12,tag:'Zurdo · Remate'},
   tapia: {name:'Tapia',full:'Agustín Tapia',num:4, h:1.86,side:'reves',rank:1,pts:21906,shirt:'#151515',shirt2:'#e5383b',collar:'round',shorts:'#151515',hair:'#3b2414',style:'volume',acc:'headband',bandCol:'#e5383b',skin:'#efc6a3',shoe:'#f2f2f2',shoeAcc:'#e5383b',rk:'#f2f2f2',rk2:'#c9a227',rkHole:'rgba(40,40,40,0.55)',grip:'#f2f2f2',rkThroat:'#d9d9d9',spd:1.12,pow:1.08,ctl:1.28,tag:'Magia'},
@@ -541,7 +544,8 @@ function setupServe(){
   const b=S.ball;b.live=false;b.kick=false;b.out=false;b.slice=false;b.x=sp.x+dir*0.35;b.y=sp.y+0.2;b.z=0.9;b.vx=b.vy=b.vz=0;
   S.server=si;S.receiver=ri;S.phase='serve';S.timer=0;S.rs={last:-1,bounces:0,crossed:false,serve:false,net:false};S.mark=null;S.trail=[];
   for(const p of S.players){p.buf=null;p.go=false;p.tgx=p.x;p.tgy=p.y;}
-  if(S.me>=0&&si===S.me)setHint(isTouch?'Pulsa un golpe para sacar':'Pulsa J para sacar');else setHint('');
+  S.aim=null;
+  if(S.me>=0&&si===S.me){S.aim={x:(S.box.x0+S.box.x1)/2+(t===0?1.2:-1.2),y:(S.box.y0+S.box.y1)/2};S.mark=S.aim;setHint(isTouch?'Apunta con el joystick y pulsa SACAR':'Apunta con WASD y pulsa J para sacar');}else setHint('');
 }
 
 /* ---- trayectorias ---- */
@@ -609,8 +613,9 @@ function hit(p,type){
 function serveHit(p){
   const b=S.ball,C=CHARS[p.char],t=p.team,dir=t===0?1:-1,bx=S.box;
   const errMul=p.ctrl==='ai'?S.diff.err:0.8,sig=0.42/C.ctl*errMul;
-  const tx=NETX+dir*(4.6+Math.random()*1.5+gauss()*sig);
-  const ty=(bx.y0+bx.y1)/2+(Math.random()-0.5)*2.4+gauss()*sig;
+  let tx=NETX+dir*(4.6+Math.random()*1.5+gauss()*sig);
+  let ty=(bx.y0+bx.y1)/2+(Math.random()-0.5)*2.4+gauss()*sig;
+  if(p.ctrl==='human'&&S.aim){tx=S.aim.x+gauss()*sig*0.6;ty=S.aim.y+gauss()*sig*0.6;S.aim=null;}
   b.x=p.x+dir*0.35;b.y=p.y+(p.y<5?0.25:-0.25);b.z=0.85;
   const D=Math.hypot(tx-b.x,ty-b.y),v=aimShot(b.x,b.y,b.z,tx,ty,D/(11+2.5*C.pow),0.14);
   b.vx=v.vx;b.vy=v.vy;b.vz=v.vz;b.live=true;b.kick=false;
@@ -788,6 +793,7 @@ function predict(){
   return out;
 }
 function computeMark(){
+  if(S.phase==='serve'&&S.aim){S.mark=S.aim;return;}
   S.mark=null;if(S.me<0||S.phase!=='rally')return;const t=S.players[S.me].team;if(S.rs.last===t)return;
   for(const s of S.pred)if(s.bc&&side(s.x)===t){S.mark={x:s.x,y:s.y};break;}
 }
@@ -899,7 +905,9 @@ function updatePlayer(p,dt){
   let mx=0,my=0;
   if(p.ctrl==='human'){mx=p.mx;my=p.my;}
   else if(p.ctrl==='ai'){[mx,my]=aiMove(p,dt);}
-  if(S.phase==='serve'){p.vx=p.vy=0;p.moving=false;}
+  if(S.phase==='serve'){p.vx=p.vy=0;p.moving=false;
+    // el que saca apunta dentro del cuadro de saque
+    if(p.ctrl==='human'&&S.server===p.i&&S.aim&&S.box){const a=S.aim,bx=S.box;a.x=clamp(a.x+mx*4.5*dt,bx.x0+0.35,bx.x1-0.35);a.y=clamp(a.y+my*4.5*dt,bx.y0+0.35,bx.y1-0.35);}}
   else if(p.ctrl!=='remote')stepMove(p,mx,my,(p.ctrl==='ai'?4.7*S.diff.spd:5.0)*CHARS[p.char].spd*(S.ball.out?1.3:1),dt);
   if(p.ctrl==='remote')clampPlayer(p);
   if(p.ctrl==='ai'){
@@ -1132,7 +1140,7 @@ function applyState(st){
     if(Array.isArray(st.sc)){S.pts=st.sc[0];S.games=st.sc[1];S.setsWon=st.sc[2];S.hist=st.sc[3];S.tb=!!st.sc[4];S.server=st.sc[5];}
     if(Array.isArray(st.e)){const p=NET.evPrev;if(p){if(st.e[0]>p[0])sfx('hit');if(st.e[1]>p[1])sfx('bounce');if(st.e[2]>p[2])sfx('wall');if(st.e[3]>p[3]){sfx('point');sfx('crowd');S.cheerT=performance.now();}if(st.e[4]>p[4])sfx('net');}NET.evPrev=st.e;}
     if(Array.isArray(st.m)&&st.m[0]!==NET.msgPrev){NET.msgPrev=st.m[0];if(st.m[1]){const mine=st.m[1].includes(teamName(S.players[S.me].team))&&!st.m[1].includes('FALTA');showMsgLocal(String(st.m[1]),String(st.m[2]||''),mine);}}
-    if(st.ph==='serve'&&S.server===S.me)setHint(isTouch?'Pulsa un golpe para sacar':'Pulsa J para sacar');else setHint('');
+    if(st.ph==='serve'&&S.server===S.me)setHint(isTouch?'Pulsa SACAR':'Pulsa J para sacar');else setHint('');
     if(st.end>=0&&!S.over){S.over={winner:st.end};showEnd();}
     else if(st.end<0&&S.over){S.over=null;showScreen(null);}
     updateHUD();
@@ -2000,19 +2008,31 @@ const CAR_WIN=9;                                   // el ranking suma los últim
 const CAR_PTS={...PTSCAT,FIP:[250,150,90,45,20]};
 const AM_FIRST=['Pablo','Javi','Dani','Sergio','Álex','Marcos','Rubén','Iván','Hugo','Adrián','Mario','Nico','Tomás','Bruno','Gonzalo','Fede','Lucas','Mateo','Facu','Diego','Raúl','Óscar','Joan','Pau','Marc','Unai','Iker','Santi','Leo','Martín'];
 const AM_LAST=['Navas','Ortega','Molina','Castro','Rubio','Vidal','Ferrer','Serra','Peña','Rey','Soto','Cano','Vega','Morales','Herrera','Iglesias','Medina','Garrido','Pastor','Lozano','Prieto','Bravo','Campos','Fuentes','Arias','Mora','Calvo','Duarte','Robles','Salas'];
-// patrocinadores (marcas inventadas): r = mejor ranking que hay que haber alcanzado
+// patrocinadores (marcas inventadas): r = mejor ranking necesario · fee = € por torneo · bonus = € por título
 const SPONS={
-  ropa:[{id:'lof',n:'La Orden del Friki',r:999,kit:{shirt:'#151515',shirt2:'#d8ff3e',shorts:'#151515',pattern:''},b:{ctl:0.01}},
-        {id:'rafaga',n:'Ráfaga Sport',r:35,kit:{shirt:'#f2711c',shirt2:'#ffffff',shorts:'#1f2b44',pattern:''},b:{spd:0.02}},
-        {id:'nebula',n:'Nébula Wear',r:15,kit:{shirt:'#6a3fb5',shirt2:'#2ec4b6',shorts:'#151515',pattern:'diag'},b:{spd:0.03,ctl:0.01}},
-        {id:'titan',n:'Titán Pro',r:5,kit:{shirt:'#1f2b44',shirt2:'#f4d03f',shorts:'#1f2b44',pattern:'stripes'},b:{spd:0.03,pow:0.03}}],
-  pala:[{id:'barrio',n:'Palas del Barrio',r:999,kit:{rk:'#8a5a2b',rk2:'#f3e2c0'},b:{ctl:0.01}},
-        {id:'volt',n:'Volt Padel',r:40,kit:{rk:'#151515',rk2:'#f4d03f'},b:{pow:0.02}},
-        {id:'cometa',n:'Cometa Rackets',r:20,kit:{rk:'#e63946',rk2:'#ffffff'},b:{pow:0.02,ctl:0.02}},
-        {id:'carbono',n:'Carbono X',r:6,kit:{rk:'#151515',rk2:'#39d3ff'},b:{pow:0.04,ctl:0.03}}],
-  zapas:[{id:'grip',n:'Grip Run',r:30,kit:{shoe:'#ffffff',shoeAcc:'#2ec4b6'},b:{spd:0.02}},
-        {id:'aero',n:'Aero Step',r:10,kit:{shoe:'#151515',shoeAcc:'#d8ff3e'},b:{spd:0.03,ctl:0.01}}]};
-const SLOTN={ropa:'Ropa',pala:'Pala',zapas:'Zapatillas'},STN={spd:'Velocidad',pow:'Potencia',ctl:'Control'};
+  marca:[{id:'manolo',n:'Bar Manolo',r:999,fee:60,bonus:200,b:{},d:'El bar de tu barrio confía en ti'},
+        {id:'medit',n:'Mediterránea Energy',r:30,fee:450,bonus:1500,b:{},d:'Bebida energética'},
+        {id:'faro',n:'Banco Faro',r:12,fee:1600,bonus:6000,b:{},d:'Banco nacional'},
+        {id:'astra',n:'Astra Motors',r:4,fee:4500,bonus:15000,b:{},d:'Coches de lujo'}],
+  ropa:[{id:'lof',n:'La Orden del Friki',r:999,fee:40,bonus:150,kit:{shirt:'#151515',shirt2:'#d8ff3e',shorts:'#151515',pattern:''},b:{ctl:0.01}},
+        {id:'rafaga',n:'Ráfaga Sport',r:35,fee:300,bonus:1000,kit:{shirt:'#f2711c',shirt2:'#ffffff',shorts:'#1f2b44',pattern:''},b:{spd:0.01}},
+        {id:'nebula',n:'Nébula Wear',r:15,fee:1000,bonus:4000,kit:{shirt:'#6a3fb5',shirt2:'#2ec4b6',shorts:'#151515',pattern:'diag'},b:{spd:0.02}},
+        {id:'titan',n:'Titán Pro',r:5,fee:3200,bonus:12000,kit:{shirt:'#1f2b44',shirt2:'#f4d03f',shorts:'#1f2b44',pattern:'stripes'},b:{spd:0.02,pow:0.01}}],
+  zapas:[{id:'grip',n:'Grip Run',r:30,fee:180,bonus:600,kit:{shoe:'#ffffff',shoeAcc:'#2ec4b6'},b:{spd:0.01}},
+        {id:'aero',n:'Aero Step',r:10,fee:800,bonus:3000,kit:{shoe:'#151515',shoeAcc:'#d8ff3e'},b:{spd:0.02}}]};
+// palas que se compran con el dinero de premios y patrocinios
+const RACKETS=[{id:'barrio',n:'Palas del Barrio',p:0,kit:{rk:'#8a5a2b',rk2:'#f3e2c0'},b:{ctl:0.01}},
+  {id:'voltj',n:'Volt Junior',p:600,kit:{rk:'#151515',rk2:'#f4d03f'},b:{pow:0.015,ctl:0.01}},
+  {id:'cometa',n:'Cometa Control',p:1800,kit:{rk:'#ffffff',rk2:'#e63946'},b:{ctl:0.03,pow:0.01}},
+  {id:'voltp',n:'Volt Power 2.0',p:3500,kit:{rk:'#f4d03f',rk2:'#151515'},b:{pow:0.04,ctl:0.005}},
+  {id:'carbono',n:'Carbono X Pro',p:8000,kit:{rk:'#151515',rk2:'#39d3ff'},b:{pow:0.04,ctl:0.03}},
+  {id:'titanb',n:'Titán Black Edition',p:20000,kit:{rk:'#0b0b0b',rk2:'#f4d03f'},b:{pow:0.055,ctl:0.04,spd:0.01}}];
+const PRIZE={FIP:[1200,600,300,150,60],P2:[8000,4000,2000,1000,500],P1:[20000,10000,5000,2500,1200],Major:[40000,20000,10000,5000,2500],Finals:[60000,30000,15000,7500]};
+const TRAVEL={FIP:150,P2:400,P1:700,Major:1000,Finals:0};
+const eur=n=>(n<0?'-':'')+Math.abs(Math.round(n)).toLocaleString('es-ES')+' €';
+const rkBy=id=>RACKETS.find(r=>r.id===id)||RACKETS[0];
+const coachPrice=()=>Math.round(900*Math.pow(1.35,CAR.coach||0)/50)*50;
+const SLOTN={marca:'Marca principal',ropa:'Ropa',zapas:'Zapatillas'},STN={spd:'Velocidad',pow:'Potencia',ctl:'Control'};
 const sponBy=(slot,id)=>(SPONS[slot]||[]).find(x=>x.id===id)||null;
 const st100=v=>Math.round((v-0.8)/0.5*100);
 const CAR_BASE=0.9,CAR_MAX=1.32,CAR_STEP=0.02;
@@ -2025,15 +2045,16 @@ const carPts=k=>(CAR.hist[k]||[]).reduce((a,b)=>a+b,0);
 const lvlOf=k=>{const C=CHARS[k];return C?(C.spd+C.pow+C.ctl)/3:0;};
 function carRanking(){return carAll().slice().sort((a,b)=>carPts(b)-carPts(a)||lvlOf(b)-lvlOf(a));}
 const carRankOf=k=>carRanking().indexOf(k)+1;
-function carBonus(){const b={spd:0,pow:0,ctl:0};for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp)for(const s in sp.b)b[s]+=sp.b[s];}return b;}
+function carBonus(){const b={spd:0,pow:0,ctl:0};for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp)for(const s in sp.b)b[s]+=sp.b[s];}const rk=rkBy(CAR.rk);for(const s in rk.b)b[s]+=rk.b[s];return b;}
+function carMigrate(){if(CAR.money==null){CAR.money=500;CAR.owned=['barrio'];CAR.rk='barrio';CAR.coach=0;CAR.earn=0;}if(CAR.spon.pala!==undefined){delete CAR.spon.pala;}if(CAR.spon.marca===undefined)CAR.spon.marca=null;}
 function carApply(){
   const C=Object.assign(cleanChar(CAR.look),{car:true,tag:'Tu carrera'});
-  for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp)Object.assign(C,sp.kit);}
+  for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp&&sp.kit)Object.assign(C,sp.kit);}Object.assign(C,rkBy(CAR.rk).kit);
   const sr=sponBy('ropa',CAR.spon.ropa);if(sr){if(C.acc==='headband')C.bandCol=sr.kit.shirt2;else if(C.acc)C.capCol=sr.kit.shirt;}
   const b=carBonus();for(const s of ['spd','pow','ctl'])C[s]=Math.min(1.4,CAR.base[s]+b[s]);
   CHARS[CAR.me]=C;delete PCACHE[CAR.me];
 }
-function carRegister(){for(const k in CAR.chars){const c=CAR.chars[k];CHARS[k]=Object.assign(cleanChar(c),{car:true,am:true,tag:'Amateur',spd:c.spd,pow:c.pow,ctl:c.ctl});}carApply();refreshKeys();}
+function carRegister(){carMigrate();for(const k in CAR.chars){const c=CAR.chars[k];CHARS[k]=Object.assign(cleanChar(c),{car:true,am:true,tag:'Amateur',spd:c.spd,pow:c.pow,ctl:c.ctl});}carApply();refreshKeys();}
 function carUnregister(){if(!CAR)return;for(const k in CAR.chars){delete CHARS[k];delete PCACHE[k];}delete CHARS[CAR.me];delete PCACHE[CAR.me];refreshKeys();}
 function genAmateur(i,lvl,names){
   const rnd=a=>a[Math.floor(Math.random()*a.length)],sh=rnd(KIT);let s2=rnd(KIT);if(s2===sh)s2=sh==='#ffffff'?'#151515':'#ffffff';
@@ -2049,7 +2070,7 @@ function newCar(){
   for(let i=0;i<N;i++){const lvl=i===0?0.88:0.86+0.16*(i/(N-1));chars['am'+i]=genAmateur(i,lvl,[fi[i%fi.length],la[i]]);}
   const pros=[].concat(...PRO_PAIRS).filter(k=>CHARS[k]);
   CAR={v:1,me:'car_me',look:JSON.parse(JSON.stringify(CARD)),cfg:{...KS},season:1,week:0,n:0,mate:'am0',chars,
-    pool:[...pros,...Object.keys(chars)],duo:[],hist:{},base:{spd:CAR_BASE,pow:CAR_BASE,ctl:CAR_BASE},sp:0,spon:{ropa:null,pala:null,zapas:null},
+    pool:[...pros,...Object.keys(chars)],duo:[],hist:{},base:{spd:CAR_BASE,pow:CAR_BASE,ctl:CAR_BASE},sp:0,spon:{marca:null,ropa:null,zapas:null},money:500,owned:['barrio'],rk:'barrio',coach:0,earn:0,
     offers:[],news:[],res:[],seasons:[],best:99,wins:0,losses:0,titles:0,mw:0,ev:null,side:null,last:null,pairs:null};
   for(const rp of PRO_PAIRS)CAR.duo.push(rp.slice());
   for(let i=1;i+1<N;i+=2)CAR.duo.push(['am'+i,'am'+(i+1)]);
@@ -2078,6 +2099,7 @@ function carNext(){
   CAR.pairs=pairs;CAR.lastS=CAR.season;CAR.mw=0;
   const evM=makeEvent(e.n,e.c,main),evC=makeEvent('FIP Gold '+city,'FIP',ch);
   const inC=ch.includes(0);CAR.ev=inC?evC:evM;CAR.side=inC?evM:evC;CAR.ev.dOff=inC?-1:0;
+  CAR.travel=(inC||main.includes(0))?(TRAVEL[CAR.ev.cat]||0):0;CAR.money-=CAR.travel;
   if(CAR.side.R[0].some(m=>m.a>=0||m.b>=0))simAll({pairs,cfg:CAR.cfg,ev:CAR.side});
   prepareEvent(CAR);
   if(CAR.ev.champ!=null)finishCarEvent();
@@ -2094,8 +2116,13 @@ function finishCarEvent(){
   for(const k of carAll()){const h=CAR.hist[k]||(CAR.hist[k]=[]);h.push(gain[k]||0);while(h.length>CAR_WIN)h.shift();}
   const res=eventResults(CAR.ev),st=res[0]==null?-1:res[0],big=CAR.ev.cat==='Major'||CAR.ev.cat==='Finals';
   if(st===0){CAR.titles++;CAR.sp+=CAR.ev.cat==='FIP'?1:(big?3:2);carNews(`🏆 ¡Campeones de <b>${esc(CAR.ev.name)}</b>!`);}
-  CAR.res[CAR.week]={name:CAR.ev.name,cat:CAR.ev.cat,user:st,gain:gain[CAR.me]||0};
-  const before=CAR.best,r=carRankOf(CAR.me);
+  const prize=st>=0?((PRIZE[CAR.ev.cat]||PRIZE.FIP)[st]||0):0;let fees=0,bon=0;
+  for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp){fees+=sp.fee||0;if(st===0)bon+=sp.bonus||0;}}
+  const net=prize+fees+bon;CAR.money+=net;CAR.earn=(CAR.earn||0)+prize+fees+bon;
+  if(net||CAR.travel)carNews(`💶 ${eur(net-(CAR.travel||0))}: premio ${eur(prize)}, patrocinadores ${eur(fees+bon)}${CAR.travel?', viaje '+eur(-CAR.travel):''}.`);
+  CAR.res[CAR.week]={name:CAR.ev.name,cat:CAR.ev.cat,user:st,gain:gain[CAR.me]||0,money:net-(CAR.travel||0)};CAR.travel=0;
+  const before=CAR.best,r=carRankOf(CAR.me),pr=CAR.lastRank||r;CAR.lastRank=r;
+  if(r<pr)carNews(`📈 Subes al <b>#${r}</b> del ranking (${pr-r} puesto${pr-r>1?'s':''} arriba).`);else if(r>pr+2)carNews(`📉 Bajas al #${r} del ranking.`);
   if(r<CAR.best){CAR.best=r;
     for(const sl in SPONS)for(const sp of SPONS[sl])if(sp.r<999&&r<=sp.r&&before>sp.r)carNews(`💼 <b>${sp.n}</b> quiere patrocinarte (${SLOTN[sl].toLowerCase()}).`);
     if(r===1)carNews('👑 <b>¡NÚMERO 1 DEL MUNDO!</b>');}
@@ -2126,7 +2153,7 @@ function buildCar(){
     optSegs(KS,'#sgKDiff','#sgKLen','#sgKGold','#sgKOut');return;}
   const me=CHARS[CAR.me],rk=carRanking(),r=rk.indexOf(CAR.me)+1,b=carBonus(),mate=CAR.mate,e=CAL[CAR.week];
   let h=`<div class="sub">Temporada ${CAR.season} · torneo ${CAR.week+1} de ${CAL.length}</div>`;
-  h+=`<div class="kbig">${r===1?'👑 ':''}#${r} DEL RANKING · ${carPts(CAR.me)} PUNTOS</div><div class="rivals">Mejor puesto: <b>#${CAR.best}</b> · ${CAR.wins} victorias, ${CAR.losses} derrotas · ${CAR.titles} títulos</div>`;
+  h+=`<div class="kbig">${r===1?'👑 ':''}#${r} DEL RANKING · ${carPts(CAR.me)} PUNTOS</div><div class="kbig" style="font-size:24px;color:${CAR.money<0?'#ff8a8a':'#fff'}">💶 ${eur(CAR.money)}</div><div class="rivals">Mejor puesto: <b>#${CAR.best}</b> · ${CAR.wins} victorias, ${CAR.losses} derrotas · ${CAR.titles} títulos</div>`;
   h+=`<div class="kgrid"><div class="detail"><img src="${portraitURL(CAR.me)}" alt=""><div class="dt"><div class="nm">${esc(me.name)} <span class="tg">Tú</span></div>`;
   h+=`<div class="inf">Puntos de mejora: <b style="color:var(--acc)">${CAR.sp}</b>${CAR.sp?' · pulsa + para subir':' · se ganan venciendo partidos'}</div>`;
   for(const k of ['spd','pow','ctl'])h+=carStatRow(k,me[k],b[k],CAR.sp>0&&CAR.base[k]<CAR_MAX-1e-6);
@@ -2140,20 +2167,24 @@ function buildCar(){
     for(const k of free)h+=carTile(k,CHARS[k].am?'Amateur':'Profesional',kBtn('pick',k,'Elegir',''));
     if(!free.length&&!CAR.offers.length)h+=`<div class="note">Todavía nadie más quiere jugar contigo. ¡Gana partidos y vendrán las ofertas!</div>`;
     h+=`</div>`;}
-  h+=`<div class="panel" style="width:100%;max-width:680px"><h3>Patrocinadores</h3>`;
+  h+=`<div class="panel" style="width:100%;max-width:680px"><h3>Patrocinadores</h3><div class="note">Las marcas te pagan en cada torneo que juegas y te dan una prima si ganas el título. Las mejores solo se interesan por ti cuando subes en el ranking.</div>`;
   for(const sl in SPONS){h+=`<div class="sub" style="letter-spacing:1.5px;font-size:11px">${SLOTN[sl]}</div><div class="spw">`;
-    h+=`<button class="spb${!CAR.spon[sl]?' on':''}" data-act="spon" data-slot="${sl}" data-id=""><b>Sin patrocinador</b>${sl==='ropa'?'Tu ropa':sl==='pala'?'Tu pala':'Tus zapatillas'}</button>`;
+    h+=`<button class="spb${!CAR.spon[sl]?' on':''}" data-act="spon" data-slot="${sl}" data-id=""><b>Sin patrocinador</b>${sl==='ropa'?'Tu ropa':sl==='zapas'?'Tus zapatillas':'Sin ingresos'}</button>`;
     for(const sp of SPONS[sl]){const ok=sp.r>=999||CAR.best<=sp.r,bon=Object.entries(sp.b).map(([s,v])=>`+${Math.round(v/0.005)} ${STN[s].slice(0,3).toLowerCase()}.`).join(' ');
-      const sw=Object.values(sp.kit).filter(v=>/^#/.test(v)).slice(0,3).map(c=>`<span class="sw2" style="background:${c}"></span>`).join('');
-      h+=`<button class="spb${CAR.spon[sl]===sp.id?' on':''}${ok?'':' lock'}" data-act="spon" data-slot="${sl}" data-id="${sp.id}"><b>${esc(sp.n)}</b>${sw} ${bon}${ok?'':` · top ${sp.r}`}</button>`;}
+      const sw=Object.values(sp.kit||{}).filter(v=>/^#/.test(v)).slice(0,3).map(c=>`<span class="sw2" style="background:${c}"></span>`).join('');
+      h+=`<button class="spb${CAR.spon[sl]===sp.id?' on':''}${ok?'':' lock'}" data-act="spon" data-slot="${sl}" data-id="${sp.id}"><b>${esc(sp.n)}</b>${sw} ${eur(sp.fee)}/torneo · título +${eur(sp.bonus)}${bon?' · '+bon:''}${ok?'':` · <b style="display:inline;color:var(--acc)">top ${sp.r}</b>`}</button>`;}
     h+=`</div>`;}
   h+=`</div>`;
+  h+=`<div class="panel" style="width:100%;max-width:680px"><h3>Tienda de palas</h3><div class="note">Compra palas mejores con tus premios y patrocinios. La pala que llevas suma a tus estadísticas.</div><div class="spw">`;
+  for(const r of RACKETS){const own=CAR.owned.includes(r.id),eq=CAR.rk===r.id,bon=Object.entries(r.b).map(([s,v])=>`+${Math.round(v/0.005)} ${STN[s].slice(0,3).toLowerCase()}.`).join(' '),can=CAR.money>=r.p;
+    h+=`<button class="spb${eq?' on':''}${!own&&!can?' lock':''}" data-act="${own?'equip':'buy'}" data-id="${r.id}"><b>${esc(r.n)}</b><span class="sw2" style="background:${r.kit.rk}"></span><span class="sw2" style="background:${r.kit.rk2}"></span> ${bon}<br>${eq?'✔ La llevas':own?'Tuya · pulsa para usarla':'Comprar por '+eur(r.p)}</button>`;}
+  h+=`</div><div class="row" style="margin-top:6px"><button class="big" data-act="coach" style="min-width:0;font-size:14px;padding:8px 14px" ${CAR.money<coachPrice()?'disabled':''}>🏋️ Sesión con entrenador: +1 punto de mejora · ${eur(coachPrice())}</button></div></div>`;
   const next=CAR.ev?`Continuar ${CAR.ev.name}`:`Jugar ${e.n}`;
   h+=`<div class="row"><button class="big" data-act="menu">Menú</button><button class="big pri" data-act="play">${esc(next)}</button></div>`;
-  if(!CAR.ev)h+=`<div class="note">${e.c==='Finals'?'Las Finals solo las juegan las 8 mejores parejas; el resto juega el FIP Gold.':'Las 16 mejores parejas del ranking juegan el cuadro principal ('+e.c+'); las demás, el FIP Gold de esa semana.'} El ranking de pareja es la suma de los puntos de los dos.</div>`;
+  if(!CAR.ev)h+=`<div class="note">${e.c==='Finals'?'Las Finals solo las juegan las 8 mejores parejas; el resto juega el FIP Gold.':'Las 16 mejores parejas del ranking juegan el cuadro principal ('+e.c+'); las demás, el FIP Gold de esa semana.'} El ranking de pareja es la suma de los puntos de los dos. Viajar a un torneo cuesta entre 150 € (FIP) y 1.000 € (Major).</div>`;
   if(CAR.news.length)h+=`<div class="news">${CAR.news.map(t=>`<div>${t}</div>`).join('')}</div>`;
   h+=`<div class="row" style="align-items:flex-start"><div class="panel"><h3>Calendario</h3><div class="calw">${CAL.map((c,i)=>{const x=CAR.res[i],cur=i===CAR.week;
-    const t=x?(x.user<0?'No jugado':STAGEN[x.user]+(x.gain?` · +${x.gain}`:''))+(x.cat==='FIP'?' (FIP)':''):(cur?(CAR.ev?'En juego':'Siguiente'):'');
+    const t=x?(x.user<0?'No jugado':STAGEN[x.user]+(x.gain?` · +${x.gain}`:'')+(x.money?` · ${eur(x.money)}`:''))+(x.cat==='FIP'?' (FIP)':''):(cur?(CAR.ev?'En juego':'Siguiente'):'');
     return `<div class="cal${cur?' cur':''}${x?' done':''}"><span class="cc">${c.c}</span><span class="cn">${c.n}</span><span class="cr">${t}</span></div>`;}).join('')}</div></div>`;
   const top=rk.slice(0,10),around=r>10?rk.slice(Math.max(10,r-3),r+2):[];
   h+=`<div class="panel"><h3>Ranking</h3><div class="rkw"><div class="rkh"><span>#</span><span>Jugador</span><span>Puntos</span></div>${[...top,...(around.length?['…']:[]),...around].map(k=>k==='…'?'<div class="rkr"><span></span><span>…</span><span></span></div>':`<div class="rkr${k===CAR.me?' you':''}"><span>${rk.indexOf(k)+1}</span><span>${esc(CHARS[k].name)}${k===mate?' 🤝':''}</span><span>${carPts(k)}</span></div>`).join('')}</div></div></div>`;
@@ -2166,6 +2197,9 @@ $('#carHub').addEventListener('click',e=>{const t=e.target.closest('[data-act]')
   else if(a==='pick'||a==='acc'){carSetMate(k);carMatesOpen=false;}
   else if(a==='dec'){CAR.offers=CAR.offers.filter(o=>o.k!==k);saveCar();}
   else if(a==='spon'){const sl=t.dataset.slot,id=t.dataset.id||null,sp=id?sponBy(sl,id):null;if(id&&!(sp&&(sp.r>=999||CAR.best<=sp.r)))return;CAR.spon[sl]=id;carApply();saveCar();}
+  else if(a==='buy'){const r=rkBy(t.dataset.id);if(!CAR.owned.includes(r.id)&&CAR.money>=r.p){CAR.money-=r.p;CAR.owned.push(r.id);CAR.rk=r.id;carNews(`🛒 Te compras la <b>${esc(r.n)}</b> por ${eur(r.p)}.`);carApply();saveCar();}}
+  else if(a==='equip'){if(CAR.owned.includes(t.dataset.id)){CAR.rk=t.dataset.id;carApply();saveCar();}}
+  else if(a==='coach'){const pr=coachPrice();if(CAR.money>=pr){CAR.money-=pr;CAR.coach=(CAR.coach||0)+1;CAR.sp++;carNews(`🏋️ Sesión con el entrenador (${eur(pr)}): +1 punto de mejora.`);saveCar();}}
   else if(a==='look'){openEditor(null,{car:true});return;}
   else if(a==='menu'){showScreen('menu');return;}
   else if(a==='play'){audioInit();if(CAR.ev)showBracket('car');else carNext();return;}
@@ -2691,6 +2725,7 @@ function frame(now){
     }else if(NET.role==='guest')guestWaitTick();
   }catch(e){console.error(e);}
   try{if(S&&(!paused||S.mode.startsWith('online')))updateFacing(dt);}catch(e){console.error(e);}
+  {const sv=!!(S&&!S.over&&!paused&&S.phase==='serve'&&S.me>=0&&S.server===S.me);if(sv!==document.body.classList.contains('serving'))document.body.classList.toggle('serving',sv);}
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
