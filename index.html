@@ -474,7 +474,7 @@ function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();r
 const OPT_DEF={assist:true};
 const store={get(k,d){try{const v=localStorage.getItem('padel_'+k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem('padel_'+k,JSON.stringify(v));localStorage.setItem('padel__ts',String(Date.now()));}catch(e){}cloudDirty();}};
 // ---- Guardado en la nube con Google (Firebase). Pega aquí la configuración web de tu proyecto de Firebase ----
-const FIREBASE_CONFIG=null;
+const FIREBASE_CONFIG={apiKey:"AIzaSyAgUppLeqPlqtRzxSm4FeHMPJhk3GOLfvg",authDomain:"padel-la-orden.firebaseapp.com",databaseURL:"https://padel-la-orden-default-rtdb.europe-west1.firebasedatabase.app",projectId:"padel-la-orden",storageBucket:"padel-la-orden.firebasestorage.app",messagingSenderId:"567896517350",appId:"1:567896517350:web:90a1506119b90dd692e927"};
 const CLOUD={user:null,auth:null,db:null,state:'off',err:'',timer:null,ask:null};
 
 const OPT=Object.assign({},OPT_DEF,store.get('opt',{}));
