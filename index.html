@@ -163,6 +163,8 @@ body.touch #ctrl{display:block}
 @keyframes pul{to{box-shadow:0 0 0 7px var(--acc),0 0 34px var(--acc)}}
 #bServe{display:none;top:20px;left:40px;width:110px;height:110px;font-size:17px;background:rgba(216,255,62,.85);color:#111;border-color:#fff;box-shadow:0 0 0 6px rgba(216,255,62,.25)}
 body.serving #bServe{display:flex}body.serving .sb:not(#bServe){opacity:0;pointer-events:none}
+#bSpr{top:0;right:4px;width:56px;height:56px;background:rgba(255,184,0,.6)}#bCall{top:142px;left:10px;width:56px;height:56px;background:rgba(80,255,140,.5)}
+.xb{flex-direction:column;font-size:17px;line-height:1}.xb small{font-size:8.5px;margin-top:2px;letter-spacing:.3px}#bSpr.cd{opacity:.4}
 #bRem{top:0;left:78px;width:76px;height:76px;background:rgba(230,57,70,.62)}
 #bGlo{top:64px;left:0;width:72px;height:72px;background:rgba(57,170,255,.55)}
 #bNor{top:58px;right:0;width:86px;height:86px;background:rgba(216,255,62,.62);color:#111;text-shadow:none}
@@ -210,13 +212,15 @@ body.touch #keys{display:none}
   <h2>Cómo se juega</h2>
   <div class="panel help">
     <div><b>Móvil:</b> desliza el dedo en la mitad izquierda para moverte. A la derecha tienes los 4 golpes. Juega con el móvil en horizontal.</div>
-    <div><b>PC:</b> muévete con <kbd>WASD</kbd> o flechas. <kbd>J</kbd>/<kbd>Espacio</kbd> bandeja · <kbd>K</kbd> globo · <kbd>L</kbd> dejada · <kbd>I</kbd> remate · <kbd>P</kbd> pausa.</div>
+    <div><b>PC:</b> muévete con <kbd>WASD</kbd> o flechas. <kbd>J</kbd>/<kbd>Espacio</kbd> bandeja · <kbd>K</kbd> globo · <kbd>L</kbd> dejada · <kbd>I</kbd> remate · <kbd>Shift</kbd> sprint · <kbd>M</kbd> ¡mía! · <kbd>P</kbd> pausa.</div>
     <div><b>Vista:</b> la cámara está detrás de tu cristal: arriba es hacia la red y tus rivales están al fondo.</div><div><b>Apuntar:</b> mientras golpeas, empuja a izquierda o derecha para mandar la bola a ese lado. Si no, tu jugador busca el hueco solo.</div>
     <div><b>Golpes:</b> <b>Bandeja</b> con bola alta: golpe cortado y controlado al fondo que bota bajo (con bola baja hace un drive, revés o volea normal) · <b>Globo</b> alto por encima de los de la red · <b>Dejada</b> corta, pegada a la red · <b>Remate</b> solo con bola alta (el botón brilla cuando toca). Un remate perfecto cerca de la red puede salir <b>por 3</b>.</div>
     <div><b>Normas:</b> saque por debajo y en diagonal al cuadro contrario, con dos oportunidades. La bola tiene que botar en el campo rival antes de tocar sus paredes. Después del bote puede rebotar en el cristal y seguir en juego. Dos botes, red o fuera es punto. Se cuenta 15-30-40-juego con ventaja (o punto de oro si lo activas) y tie-break en el empate a juegos.</div>
     <div><b>Emoticonos:</b> pulsa 😀 arriba (o las teclas <kbd>1</kbd>-<kbd>0</kbd> en PC) para que tu jugador muestre un emoji. En el online también lo ve tu rival.</div>
     <div><b>Ayuda de movimiento:</b> si no tocas el joystick cuando la bola viene a ti, tu jugador se coloca solo. Se puede quitar en la pausa. Si golpeas con buen tiempo, el golpe sale más preciso y más rápido.</div>
     <div><b>Modos:</b> Contra bots, Torneo (cuadro de 16), Circuito (temporada completa con ranking), Carrera (crea tu jugador y llévalo al número 1), Entrenamiento y Online (uno contra otro o juntos contra bots). En <b>Jugadores</b> puedes cambiar el aspecto de cualquiera o crear el tuyo.</div>
+    <div><b>Sprint y ¡mía!:</b> el botón ⚡ te da un acelerón corto (se recarga en unos segundos). El botón ✋ avisa a tu compañero de que esa bola es tuya y no irá a por ella.</div>
+    <div><b>Verja:</b> si el saque bota en el cuadro y luego da en la verja metálica es falta. Si tu golpe da primero en la verja de tu propio campo, pierdes el punto (en el cristal de tu campo sí vale).</div>
     <div><b>Gráficos:</b> el juego usa gráficos 3D si tu dispositivo lo permite. Si va lento, en la pausa puedes cambiar a los gráficos clásicos.</div>
     <div><b>Consejo:</b> la marca amarilla en el suelo te dice dónde va a botar la bola. El círculo bajo tu jugador se pone verde cuando la tienes a tiro.</div>
   </div>
@@ -386,6 +390,8 @@ body.touch #keys{display:none}
       <div class="sb" id="bNor" data-shot="bandeja">BANDEJA</div>
       <div class="sb" id="bDej" data-shot="dejada">DEJADA</div>
       <div class="sb" id="bServe" data-shot="bandeja">SACAR</div>
+      <div class="sb xb" id="bSpr">⚡<small>SPRINT</small></div>
+      <div class="sb xb" id="bCall">✋<small>¡MÍA!</small></div>
     </div>
   </div>
   <div id="keys"><kbd>WASD</kbd> mover · <kbd>J</kbd> bandeja · <kbd>K</kbd> globo · <kbd>L</kbd> dejada · <kbd>I</kbd> remate · <kbd>P</kbd> pausa · <kbd>1</kbd>-<kbd>0</kbd> emojis</div>
@@ -579,7 +585,7 @@ function canHit(p,type){
   if(b.z>((type==='remate'||type==='bandeja')?3.3:2.5)||b.z<0.03)return false;
   return Math.hypot(b.x-p.x,b.y-p.y)<(p.ctrl==='remote'?REACH_REMOTE:REACH);
 }
-function hit(p,type){
+function hit(p,type){if(S.call&&S.call.team===p.team)S.call=null;
   const b=S.ball,C=CHARS[p.char],t=p.team,dir=t===0?1:-1;
   const d=Math.hypot(b.x-p.x,b.y-p.y);
   const q=clamp(1-Math.max(0,d-0.55)/1.1,0.35,1);
@@ -639,6 +645,8 @@ function applyKick(o,last,vi){const d=last===0?1:-1;
   if(o.kick===4){const sy=o.y<W/2?-1:1,dist=(sy<0?o.y:W-o.y)+0.1;o.vz=9.5;o.vy=sy*clamp((dist+1.8)/1.94,dist/1.5,dist/0.45);o.vx=d*1.2;}
   else{const dist=(d>0?L-o.x:o.x)+0.1;o.vz=10;o.vx=d*clamp((dist+1.8)/2.04,dist/1.5,dist/0.45);o.vy*=0.3;}
   o.kick=false;}
+// ¿la pared en este punto es verja metálica (malla) y no cristal?
+function meshAt(x,z){const n=Math.min(x,L-x);return n>=2&&(n>=4||z>=2);}
 function stepBall(dt){
   const b=S.ball;if(!b.live)return;
   const px=b.x,py=b.y,pz=b.z;
@@ -657,14 +665,14 @@ function stepBall(dt){
   }
   if(b.out){ // bola fuera de la pista: sin paredes, salvo si intenta entrar por debajo de su altura
     if(inCourt(b.x,b.y)&&!inCourt(px,py)){
-      if(b.z<WALLH){b.x=px;b.y=py;if(px<0||px>L)b.vx=-b.vx*REST_W;else b.vy=-b.vy*REST_W;ev('wall',side(b.x));}
+      if(b.z<WALLH){const sd=!(px<0||px>L);b.x=px;b.y=py;if(!sd)b.vx=-b.vx*REST_W;else b.vy=-b.vy*REST_W;ev('wall',side(b.x),sd&&meshAt(b.x,b.z));}
       else b.out=false;
     }
     if(Math.abs(b.x-L/2)>L/2+9||Math.abs(b.y-W/2)>W/2+9){ev('outbounce');b.live=false;}
     return;
   }
   if(b.x<0||b.x>L){const s=b.x<0?0:1;if(b.z>WALLH){ev('out',s,'back');if(!b.out)b.live=false;return;}b.x=b.x<0?-b.x:2*L-b.x;b.vx=-b.vx*REST_W;b.vy*=0.85;ev('wall',s);}
-  if(b.y<0||b.y>W){if(b.z>WALLH){ev('out',side(b.x),'side');if(!b.out)b.live=false;return;}b.y=b.y<0?-b.y:2*W-b.y;b.vy=-b.vy*REST_W;b.vx*=0.85;ev('wall',side(b.x));}
+  if(b.y<0||b.y>W){if(b.z>WALLH){ev('out',side(b.x),'side');if(!b.out)b.live=false;return;}const ms=meshAt(b.x,b.z);b.y=b.y<0?-b.y:2*W-b.y;if(ms){b.vy=-b.vy*0.35;b.vx*=0.6;b.vz*=0.5;}else{b.vy=-b.vy*REST_W;b.vx*=0.85;}ev('wall',side(b.x),ms);}
 }
 function ev(type,s,extra){
   if(type==='bounce'){S.ev.bounce++;sfx('bounce');S.predDirty=true;}
@@ -685,7 +693,13 @@ function ev(type,s,extra){
     if(r.bounces>=2)point(t,r.serve?'¡Saque directo!':'Doble bote');
     return;
   }
-  if(type==='wall'){if(s===o&&r.bounces===0){if(r.serve)fault('Pared antes de botar');else point(o,'Fuera: pared sin bote');}return;}
+  if(type==='wall'){
+    if(s===o&&r.bounces===0){if(r.serve)fault('Pared antes de botar');else point(o,'Fuera: pared sin bote');return;}
+    if(extra===true){ // verja
+      if(r.serve&&s===o&&r.bounces===1){fault('Saque a la verja');return;}
+      if(s===t&&!r.crossed){if(r.serve)fault('Verja de su campo');else point(o,'Da en la verja de su campo');return;}
+    }
+    return;}
   if(type==='out'){
     if(s===o&&r.bounces>=1){
       if(S.outPlay&&!r.wentOut){r.wentOut=true;r.outKind=extra;S.ball.out=true;S.predDirty=true;showMsg(extra==='back'?'¡POR 3!':'¡POR 4!','¡Sal a por ella!',false);return;}
@@ -832,6 +846,7 @@ function aiPlan(p){
       else if(mate.ctrl==='human'||mate.ctrl==='remote')mine=zc===p.zone||(c.ok&&Math.hypot(mate.x-c.x,mate.y-c.y)>3.8);
       else mine=true;
     }
+    if(calledOff(p))mine=false;
     if(mine){p.go=true;p.tgx=c.x-dir*0.4;p.tgy=c.y+(p.zone?-0.25:0.25);if(S.outPlay){p.tgx=clamp(p.tgx,-OUTX+0.3,L+OUTX-0.3);p.tgy=clamp(p.tgy,-OUTY+0.3,W+OUTY-0.3);}return;}
   }
   p.go=false;
@@ -860,7 +875,7 @@ function aiChooseShot(p){
   return 'normal';
 }
 function aiTryHit(p){
-  if(S.phase==='serve'||S.phase!=='rally'||p.react>0)return;
+  if(S.phase==='serve'||S.phase!=='rally'||p.react>0||calledOff(p))return;
   if(!canHit(p,'remate'))return;
   const b=S.ball,d=Math.hypot(b.x-p.x,b.y-p.y);
   const toward=(b.vx*(p.x-b.x)+b.vy*(p.y-b.y))>0;
@@ -915,7 +930,7 @@ function updatePlayer(p,dt){
   if(S.phase==='serve'){p.vx=p.vy=0;p.moving=false;
     // el que saca apunta dentro del cuadro de saque
     if(p.ctrl==='human'&&S.server===p.i&&S.aim&&S.box){const a=S.aim,bx=S.box;a.x=clamp(a.x+mx*4.5*dt,bx.x0+0.35,bx.x1-0.35);a.y=clamp(a.y+my*4.5*dt,bx.y0+0.35,bx.y1-0.35);}}
-  else if(p.ctrl!=='remote')stepMove(p,mx,my,(p.ctrl==='ai'?4.7*S.diff.spd:5.0)*CHARS[p.char].spd*(S.ball.out?1.3:1),dt);
+  else if(p.ctrl!=='remote')stepMove(p,mx,my,(p.ctrl==='ai'?4.7*S.diff.spd:5.0*sprintK(p))*CHARS[p.char].spd*(S.ball.out?1.3:1),dt);
   if(p.ctrl==='remote')clampPlayer(p);
   if(p.ctrl==='ai'){
     if(S.phase==='serve'&&S.server===p.i&&S.timer>1.1)serveHit(p);
@@ -989,13 +1004,21 @@ function pressShot(type){
   p.buf={type,t:0.45};if(!p.swing||p.swing.t>0.2)p.swing={type,t:0};
 }
 const EMOS=['😀','😂','😎','🔥','👏','💪','😱','😡','🤦','🙏'];
-function showEmote(p,i){p.emo={i,t:performance.now()};p.emoSeq=(p.emoSeq||0)+1;sfx('emo');}
+const SAY_MIA=10;
+function showEmote(p,i){p.emo={i,t:performance.now()};p.emoSeq=(p.emoSeq||0)+1;sfx('emo');if(i===SAY_MIA&&S)S.call={team:p.team,by:p.i,t:performance.now()};}
+// el compañero de quien grita "¡mía!" no va a por la bola hasta que tu equipo la golpee
+const calledOff=p=>!!(S&&S.call&&S.call.team===p.team&&S.call.by!==p.i&&performance.now()-S.call.t<6000);
+function pressCall(){audioInit();if(!S||S.me<0||S.over||S.phase!=='rally')return;sendEmote(SAY_MIA);}
+function pressSprint(){audioInit();if(!S||S.me<0||S.over)return;const p=S.players[S.me],now=performance.now();if((p.sprCd||0)>now)return;p.sprT=now+650;p.sprCd=now+2600;sfx('emo');}
+const sprintK=p=>{const now=performance.now();return (p.sprT||0)>now?1.6:1;};
 function sendEmote(i){audioInit();$('#emopanel').classList.remove('on');if(!S||S.me<0||S.over)return;showEmote(S.players[S.me],i);if(S.mode==='online-guest'){NET.eseq=(NET.eseq||0)+1;NET.ei=i;}}
 const KEYSHOT={KeyJ:'bandeja',Space:'bandeja',KeyK:'globo',KeyL:'dejada',KeyI:'remate'};
 addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT')return;
   {const dm=e.code.match(/^Digit(\d)$/);if(dm&&S){const n=+dm[1];if(!e.repeat)sendEmote(n===0?9:n-1);return;}}
   if(KEYSHOT[e.code]){e.preventDefault();if(!e.repeat)pressShot(KEYSHOT[e.code]);return;}
+  if(e.code==='ShiftLeft'||e.code==='ShiftRight'){if(!e.repeat)pressSprint();}
+  if(e.code==='KeyM'){if(!e.repeat)pressCall();return;}
   if(e.code==='KeyP'||e.code==='Escape'){if(S&&!S.over)togglePause();return;}
   if(e.code.startsWith('Arrow'))e.preventDefault();
   keys[e.code]=true;
@@ -1009,7 +1032,7 @@ jz.addEventListener('pointermove',e=>{if(e.pointerId!==joy.id)return;let dx=e.cl
 const joyEnd=e=>{if(e.pointerId!==joy.id)return;joy.id=null;joy.x=joy.y=0;jEl.style.display='none';};
 jz.addEventListener('pointerup',joyEnd);jz.addEventListener('pointercancel',joyEnd);
 document.querySelectorAll('.sb').forEach(b=>{
-  b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('dn');pressShot(b.dataset.shot);});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('dn');if(b.id==='bSpr')pressSprint();else if(b.id==='bCall')pressCall();else pressShot(b.dataset.shot);});
   const up=()=>b.classList.remove('dn');b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up);
 });
 
@@ -1164,7 +1187,7 @@ function hostReadGuest(dt){
   if(g&&g.presence){
     NET.lastSeen=now;NET.lost=false;const pr=g.presence;
     if(S.phase!=='serve'&&Number.isFinite(pr.x)&&Number.isFinite(pr.y)){const ox=p.x,oy=p.y;p.x=pr.x;p.y=pr.y;clampPlayer(p);p.moving=Math.hypot(p.x-ox,p.y-oy)>0.002;if(p.moving)p.anim+=dt*14;p.my=0;}
-    if(Array.isArray(pr.e)){if(NET.lastE==null)NET.lastE=pr.e[0];else if(pr.e[0]!==NET.lastE){NET.lastE=pr.e[0];const ei=pr.e[1]|0;if(ei>=0&&ei<EMOS.length)showEmote(p,ei);}}
+    if(Array.isArray(pr.e)){if(NET.lastE==null)NET.lastE=pr.e[0];else if(pr.e[0]!==NET.lastE){NET.lastE=pr.e[0];const ei=pr.e[1]|0;if(ei>=0&&ei<=SAY_MIA)showEmote(p,ei);}}
     if(pr.k!==undefined){if(NET.lastK===null)NET.lastK=pr.k;else if(pr.k!==NET.lastK){NET.lastK=pr.k;const ty=SHOTS.includes(pr.s)?pr.s:'normal';p.buf={type:ty,t:0.5};p.my=Number.isFinite(pr.a)?pr.a:0;if(!p.swing)p.swing={type:ty,t:0};}}
   }else if(now-NET.lastSeen>7000&&!NET.lost){NET.lost=true;showMsg('RIVAL DESCONECTADO','Puedes salir al menú desde pausa');}
 }
@@ -1186,7 +1209,7 @@ function applyState(st){
     if(Array.isArray(st.r)){S.rs.last=st.r[0];S.rs.bounces=st.r[1];S.rs.serve=!!st.r[2];}
     if(Array.isArray(st.p))st.p.forEach((q,i)=>{const p=S.players[i];if(!p||!Array.isArray(q))return;if(Number.isFinite(q[0])){p.tx=q[0];p.ty=q[1];}p.mv=!!q[4];
       if(i!==S.me&&q[2]>=0&&q[3]!==p.swingId){p.swingId=q[3];p.swing={type:SHOTS[q[2]]||'normal',t:0};}
-      if(i!==S.me&&q[6]!==undefined&&q[6]!==p.emoSeen){if(p.emoSeen!==undefined&&q[5]>=0&&q[5]<EMOS.length){p.emo={i:q[5],t:performance.now()};sfx('emo');}p.emoSeen=q[6];}});
+      if(i!==S.me&&q[6]!==undefined&&q[6]!==p.emoSeen){if(p.emoSeen!==undefined&&q[5]>=0&&q[5]<=SAY_MIA){p.emo={i:q[5],t:performance.now()};sfx('emo');}p.emoSeen=q[6];}});
     if(Array.isArray(st.sc)){S.pts=st.sc[0];S.games=st.sc[1];S.setsWon=st.sc[2];S.hist=st.sc[3];S.tb=!!st.sc[4];S.server=st.sc[5];}
     if(Array.isArray(st.e)){const p=NET.evPrev;if(p){if(st.e[0]>p[0])sfx('hit');if(st.e[1]>p[1])sfx('bounce');if(st.e[2]>p[2])sfx('wall');if(st.e[3]>p[3]){sfx('point');sfx('crowd');S.cheerT=performance.now();}if(st.e[4]>p[4])sfx('net');}NET.evPrev=st.e;}
     if(Array.isArray(st.m)&&st.m[0]!==NET.msgPrev){NET.msgPrev=st.m[0];if(st.m[1]){const mine=st.m[1].includes(teamName(S.players[S.me].team))&&!st.m[1].includes('FALTA');showMsgLocal(String(st.m[1]),String(st.m[2]||''),mine);}}
@@ -1210,7 +1233,7 @@ function guestUpdate(dt){
   }
   const me=S.players[S.me];
   if(S.phase==='serve'||S.phase==='over'){if(me.tx!==undefined){me.x=me.tx;me.y=me.ty;}me.moving=false;}
-  else{const [mx,my]=worldInput();stepMove(me,mx,my,5.0*CHARS[me.char].spd*(S.ball.out?1.3:1),dt*SPEED);me.my=my;}
+  else{const [mx,my]=worldInput();stepMove(me,mx,my,5.0*sprintK(me)*CHARS[me.char].spd*(S.ball.out?1.3:1),dt*SPEED);me.my=my;}
   NET.sendT-=dt;if(NET.sendT<=0&&NET.r){NET.sendT=1/24;NET.r.presence({x:r2(me.x),y:r2(me.y),k:NET.k,s:NET.s,a:r2(me.my||0),e:[NET.eseq||0,NET.ei||0]}).catch(()=>{});}
   S.predT-=dt;if(S.predT<=0){S.pred=predict();S.predT=0.1;computeMark();}
 }
@@ -1627,7 +1650,7 @@ function drawTags(p,fx,ty,u){
     if(age<2300){const sc2=age<180?0.5+0.5*age/180:1,al=age>1900?1-(age-1900)/400:1,bs=Math.max(30,Math.min(48,u*0.95))*sc2,by=ty-bh-10-bs/2;
       ctx.globalAlpha=al;ctx.fillStyle='rgba(255,255,255,0.96)';rr(ctx,fx-bs/2-5,by-bs/2-3,bs+10,bs+6,11);
       ctx.beginPath();ctx.moveTo(fx-6,by+bs/2+2);ctx.lineTo(fx+6,by+bs/2+2);ctx.lineTo(fx,by+bs/2+10);ctx.fill();
-      ctx.font=`${Math.round(bs*0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(EMOS[p.emo.i]||'',fx,by+1);ctx.globalAlpha=1;}
+      ctx.font=`${Math.round(bs*0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';if(p.emo.i===SAY_MIA){ctx.font=`900 ${Math.round(bs*0.42)}px Inter,sans-serif`;ctx.fillStyle='#111';ctx.fillText('¡MÍA!',fx,by+1);}else ctx.fillText(EMOS[p.emo.i]||'',fx,by+1);ctx.globalAlpha=1;}
     else p.emo=null;}
 }
 function guestCanHit(p){const b=S.ball,r=S.rs;if(!b.live||r.last===p.team||side(b.x)!==p.team||r.bounces>=2)return false;if(r.serve&&r.bounces<1)return false;if(b.z>3.3)return false;return Math.hypot(b.x-p.x,b.y-p.y)<REACH_REMOTE;}
@@ -1673,6 +1696,7 @@ function render(){
 function updRec(){
   let rec=null;const me=S&&S.me>=0?S.players[S.me]:null,b=S&&S.ball;
   if(me&&S.phase==='rally'){const ok=S.mode==='online-guest'?guestCanHit(me):canHit(me,'remate');if(ok)rec=b.z>2.0?'remate':(b.z>1.45?'bandeja':(S.mode==='training'?'bandeja':null));}
+  {const me2=S&&S.me>=0?S.players[S.me]:null,cd=!!(me2&&(me2.sprCd||0)>performance.now());const bs=$('#bSpr');if(bs&&bs.classList.contains('cd')!==cd)bs.classList.toggle('cd',cd);}
   if(rec!==lastRec){document.querySelectorAll('.sb').forEach(e=>e.classList.toggle('glow',e.dataset.shot===rec));lastRec=rec;}
 }
 let lastRec=null;
