@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Pádel La Orden</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#070d1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pádel La Orden">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap">
 <style>
 :root{--bg:#0b1220;--acc:#d8ff3e;--acc2:#39d3ff;--card:#141d33;--card2:#1b2744;--txt:#eef3ff;--mut:#9fb0d0}
@@ -1716,7 +1723,17 @@ function buildOnline(){
   const sel=$('#selOnRiv');sel.innerHTML=PRO_PAIRS.map((p,i)=>`<option value="${i}"${i===ON.riv?' selected':''}>${esc(p.map(k=>CHARS[k].name).join(' / '))}</option>`).join('');sel.onchange=()=>{ON.riv=+sel.value;};
   document.querySelectorAll('.coopo').forEach(e=>e.style.display=ON.mode==='coop'?'':'none');
 }
-function tryFullscreen(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().then(()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}).catch(()=>{});}catch(e){}}
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+function tryFullscreen(){try{const d=document.documentElement,rq=d.requestFullscreen||d.webkitRequestFullscreen;if(fsEl()||!rq)return;const r=rq.call(d,{navigationUI:'hide'});
+  const lock=()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}};if(r&&r.then)r.then(lock).catch(()=>{});else lock();}catch(e){}}
+// al girar el móvil en horizontal se pone a pantalla completa (el navegador exige un toque: vale el primero que hagas)
+const FSA={arm:false,manual:false};
+const isLand=()=>innerWidth>innerHeight;
+function fsCheck(){if(!isTouch)return;if(!isLand()){FSA.manual=false;FSA.arm=false;return;}if(!fsEl()&&!FSA.manual){FSA.arm=true;tryFullscreen();}}
+addEventListener('orientationchange',()=>setTimeout(fsCheck,250));addEventListener('resize',()=>setTimeout(fsCheck,250));
+const fsTap=()=>{if(FSA.arm&&isTouch&&isLand()&&!fsEl()&&!FSA.manual)tryFullscreen();if(fsEl())FSA.arm=false;};
+addEventListener('touchend',fsTap,{passive:true});addEventListener('pointerup',fsTap,{passive:true});addEventListener('click',fsTap,{passive:true});
+setTimeout(fsCheck,300);
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{audioInit();const g=b.dataset.go;if(g==='setup')buildSetup();if(g==='tour')buildTour();if(g==='circ')buildCirc();if(g==='car')buildCar();if(g==='roster')buildRoster();if(g==='train')buildTrain();if(g==='online')buildOnline();showScreen(g);});
 $('#bPlay').onclick=()=>{audioInit();store.set('set',SET);if(isTouch)tryFullscreen();
   newMatch({mode:'bots',chars:[SET.me,SET.mate,SET.riv[0],SET.riv[1]],ctrls:['human','ai','ai','ai'],me:0,diff:SET.diff,len:SET.len,golden:SET.golden,outPlay:SET.out!==false});};
@@ -1734,7 +1751,7 @@ $('#bAgain').onclick=()=>{if(S&&S.mode==='online-host'){const o=lastOpts;newMatc
 $('#bSnd').textContent=sound?'🔊':'🔇';$('#bSnd').onclick=()=>{sound=!sound;store.set('snd',sound);$('#bSnd').textContent=sound?'🔊':'🔇';audioInit();};
 EMOS.forEach((em,i)=>{const b=document.createElement('button');b.className='eb';b.textContent=em;b.onclick=ev=>{ev.stopPropagation();sendEmote(i);};$('#emopanel').appendChild(b);});
 $('#bEmo').onclick=()=>{audioInit();$('#emopanel').classList.toggle('on');};
-$('#bFs').onclick=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else tryFullscreen();}catch(e){}};
+$('#bFs').onclick=()=>{try{if(fsEl()){FSA.manual=true;FSA.arm=false;(document.exitFullscreen||document.webkitExitFullscreen).call(document);}else{FSA.manual=false;tryFullscreen();}}catch(e){}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&S&&!paused&&!S.over&&!S.mode.startsWith('online'))togglePause();});
 
 /* ============ JUGADORES: PERSONALIZAR Y CREAR ============ */
