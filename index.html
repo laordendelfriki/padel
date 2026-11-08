@@ -86,6 +86,30 @@ button{font-family:inherit;cursor:pointer;border:none;color:var(--txt)}
 .stat b{flex:0 0 52px;font-weight:600}
 .stat i{flex:1;height:6px;background:#0b1220;border-radius:4px;overflow:hidden;position:relative}
 .stat i u{position:absolute;inset:0 auto 0 0;background:var(--acc2);border-radius:4px}
+.stat .sv2{flex:0 0 24px;text-align:right;color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .bon{flex:0 0 26px;color:var(--acc);font-weight:800;font-size:10px}
+.plus{width:24px;height:22px;border-radius:6px;background:var(--acc);color:#111;font-weight:900;padding:0;line-height:1;font-size:15px}
+.kgrid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+.kgrid .detail{max-width:430px;flex:1;min-width:280px}
+.kbig{font-family:'Bebas Neue',Impact;font-size:34px;color:var(--acc);letter-spacing:1px;line-height:1}
+.klist{display:flex;flex-direction:column;gap:4px;width:100%;max-width:560px}
+.offer{display:flex;align-items:center;gap:8px;background:#141d33;border-radius:10px;padding:4px 8px}
+.offer img{width:40px;height:44px}
+.offer .ot{flex:1;font-size:12px;color:#cfd9ee;line-height:1.3}.offer .ot b{color:#fff;font-size:14px}
+.offer button{padding:7px 10px;border-radius:8px;font-weight:800;font-size:12px;background:var(--card2)}
+.offer button.ok{background:var(--acc);color:#111}
+.spw{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;width:100%;max-width:640px}
+.spb{background:#141d33;border:2px solid rgba(255,255,255,.08);border-radius:10px;padding:5px 8px;font-size:11px;text-align:left;color:var(--mut);line-height:1.3}
+.spb b{display:block;color:#fff;font-size:13px}.spb .sw2{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:2px;vertical-align:middle}
+.spb.on{border-color:var(--acc);box-shadow:0 0 0 2px rgba(216,255,62,.2)}.spb.lock{opacity:.38;pointer-events:none}
+.cloudbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:13px;color:var(--mut)}
+.gbtn{display:flex;align-items:center;gap:10px;background:#fff;color:#1f1f1f;border-radius:999px;padding:8px 16px 8px 10px;font-weight:700;font-size:14px;border:1px solid #dadce0}
+.gbtn svg{width:20px;height:20px}
+.cloudbar .who{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px 12px 4px 4px;color:#fff;font-weight:700}
+.cloudbar .who img,.cloudbar .who .av{width:28px;height:28px;border-radius:50%;background:var(--acc2);color:#111;display:flex;align-items:center;justify-content:center;font-weight:900}
+.cloudbar .ok{color:var(--acc)}.cloudbar .bad{color:#ff8a8a;max-width:520px;text-align:center}
+.news{font-size:12px;color:#cfd9ee;line-height:1.5;max-width:560px;width:100%}
+.news div{padding:2px 8px;border-left:3px solid var(--acc2);margin:2px 0;background:rgba(20,29,51,.6);border-radius:0 6px 6px 0}
 .seg{display:inline-flex;background:var(--card);border-radius:12px;padding:3px;gap:3px;flex-wrap:wrap;justify-content:center}
 .seg button{background:transparent;padding:8px 12px;border-radius:9px;font-weight:700;font-size:14px;color:var(--mut)}
 .seg button.on{background:var(--acc);color:#111}
@@ -155,10 +179,19 @@ body.touch #keys{display:none}
     <button class="big" data-go="online"><span class="ic">🌐</span>Online</button>
     <button class="big" data-go="tour"><span class="ic">🏆</span>Torneo</button>
     <button class="big" data-go="circ"><span class="ic">🗓️</span>Circuito</button>
+    <button class="big" data-go="car"><span class="ic">⭐</span>Carrera</button>
     <button class="big" data-go="roster"><span class="ic">👤</span>Jugadores</button>
     <button class="big" data-go="train"><span class="ic">🎯</span>Entrenamiento</button>
   </div>
+  <div id="cloudBar" class="cloudbar"></div>
   <button class="link" data-go="help">Cómo se juega</button>
+</div></div>
+
+<!-- NUBE: elegir partida -->
+<div id="cloudask" class="screen"><div class="wrap">
+  <h2>Partida guardada en tu cuenta</h2>
+  <div class="panel" style="max-width:560px"><div class="note" id="caN"></div></div>
+  <div class="row"><button class="big pri" id="caLoad">☁️ Cargar la de mi cuenta</button><button class="big" id="caKeep">📱 Quedarme con la de aquí</button></div>
 </div></div>
 
 <!-- HELP -->
@@ -171,8 +204,8 @@ body.touch #keys{display:none}
     <div><b>Golpes:</b> <b>Bandeja</b> con bola alta: golpe cortado y controlado al fondo que bota bajo (con bola baja hace un drive, revés o volea normal) · <b>Globo</b> alto por encima de los de la red · <b>Dejada</b> corta, pegada a la red · <b>Remate</b> solo con bola alta (el botón brilla cuando toca). Un remate perfecto cerca de la red puede salir <b>por 3</b>.</div>
     <div><b>Normas:</b> saque por debajo y en diagonal al cuadro contrario, con dos oportunidades. La bola tiene que botar en el campo rival antes de tocar sus paredes. Después del bote puede rebotar en el cristal y seguir en juego. Dos botes, red o fuera es punto. Se cuenta 15-30-40-juego con ventaja (o punto de oro si lo activas) y tie-break en el empate a juegos.</div>
     <div><b>Emoticonos:</b> pulsa 😀 arriba (o las teclas <kbd>1</kbd>-<kbd>0</kbd> en PC) para que tu jugador muestre un emoji. En el online también lo ve tu rival.</div>
-    <div><b>Ayuda de movimiento:</b> si no tocas el joystick cuando la bola viene a ti, tu jugador se coloca solo. Se puede quitar en la pausa. Al golpear verás si fue <b>¡PERFECTO!</b> (más preciso y más rápido), <b>BIEN</b> o <b>FORZADO</b>.</div>
-    <div><b>Modos:</b> Contra bots, Torneo (cuadro de 16), Circuito (temporada completa con ranking), Entrenamiento y Online (uno contra otro o juntos contra bots). En <b>Jugadores</b> puedes cambiar el aspecto de cualquiera o crear el tuyo.</div>
+    <div><b>Ayuda de movimiento:</b> si no tocas el joystick cuando la bola viene a ti, tu jugador se coloca solo. Se puede quitar en la pausa. Si golpeas con buen tiempo, el golpe sale más preciso y más rápido.</div>
+    <div><b>Modos:</b> Contra bots, Torneo (cuadro de 16), Circuito (temporada completa con ranking), Carrera (crea tu jugador y llévalo al número 1), Entrenamiento y Online (uno contra otro o juntos contra bots). En <b>Jugadores</b> puedes cambiar el aspecto de cualquiera o crear el tuyo.</div>
     <div><b>Consejo:</b> la marca amarilla en el suelo te dice dónde va a botar la bola. El círculo bajo tu jugador se pone verde cuando la tienes a tiro.</div>
   </div>
   <button class="big" data-go="menu">Volver</button>
@@ -251,12 +284,28 @@ body.touch #keys{display:none}
   </div>
 </div></div>
 
+<!-- CARRERA -->
+<div id="car" class="screen"><div class="wrap">
+  <h2>Modo carrera</h2>
+  <div id="carSetup" class="wrap" style="margin:0">
+    <div class="note">Crea tu jugador y empieza desde abajo con un compañero amateur. Gana partidos para subir tus estadísticas, entra en los grandes torneos, elige patrocinadores y deja que los mejores te pidan jugar con ellos. El objetivo: <b>número 1 del mundo</b>.</div>
+    <div class="detail" id="carDraft"></div>
+    <button class="big" id="bCarLook">✏️ Crear / editar mi jugador</button>
+    <div class="panel"><div class="opts">
+      <h3>Dificultad</h3><div class="seg" id="sgKDiff"></div><h3>Duración</h3><div class="seg" id="sgKLen"></div>
+      <h3>Punto de oro</h3><div class="seg" id="sgKGold"></div><h3>Salir a por la bola</h3><div class="seg" id="sgKOut"></div>
+    </div></div>
+    <div class="row"><button class="big" data-go="menu">Atrás</button><button class="big pri" id="bCarStart">Empezar carrera</button></div>
+  </div>
+  <div id="carHub" class="wrap" style="margin:0"></div>
+</div></div>
+
 <!-- CUADRO -->
 <div id="bracket" class="screen"><div class="wrap">
   <div class="sub" id="brSub">Torneo</div><h2 id="brTitle">Major de La Orden</h2>
   <div class="bracket" id="brBody"></div>
   <div class="rivals" id="brNote"></div>
-  <div class="row"><button class="big" id="brBack">Menú</button><button class="big pri" id="brPlay">Jugar</button></div>
+  <div class="row"><button class="big" id="brBack">Menú</button><button class="big" id="brSim" style="display:none">Simular partido</button><button class="big pri" id="brPlay">Jugar</button></div>
 </div></div>
 
 <!-- TRAINING -->
@@ -396,7 +445,7 @@ try{MODS=JSON.parse(localStorage.getItem('padel_mods')||'{}')||{};CUSTOM=JSON.pa
 for(const k in MODS)if(CHARS[k])Object.assign(CHARS[k],MODS[k]);
 for(const c of CUSTOM)if(c&&c.id&&/^c\d+$/.test(c.id))CHARS[c.id]=Object.assign({custom:true},c);
 let CH_KEYS=Object.keys(CHARS);
-function refreshKeys(){CH_KEYS=Object.keys(CHARS).filter(k=>!CHARS[k].net);}
+function refreshKeys(){CH_KEYS=Object.keys(CHARS).filter(k=>!CHARS[k].net&&!CHARS[k].car);}
 const isPro=k=>!!(ORIG[k]&&ORIG[k].pts);
 
 const DIFF={facil:{spd:0.8,react:0.38,err:1.7,kick:0.3,mistake:0.17},normal:{spd:0.93,react:0.22,err:1.05,kick:0.6,mistake:0.1},dificil:{spd:1.04,react:0.1,err:0.6,kick:1,mistake:0.055}};
@@ -409,7 +458,10 @@ const side=x=>x<NETX?0:1;
 const r2=v=>Math.round(v*100)/100;
 function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 const OPT_DEF={assist:true};
-const store={get(k,d){try{const v=localStorage.getItem('padel_'+k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem('padel_'+k,JSON.stringify(v));}catch(e){}}};
+const store={get(k,d){try{const v=localStorage.getItem('padel_'+k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem('padel_'+k,JSON.stringify(v));localStorage.setItem('padel__ts',String(Date.now()));}catch(e){}cloudDirty();}};
+// ---- Guardado en la nube con Google (Firebase). Pega aquí la configuración web de tu proyecto de Firebase ----
+const FIREBASE_CONFIG=null;
+const CLOUD={user:null,auth:null,db:null,state:'off',err:'',timer:null,ask:null};
 
 const OPT=Object.assign({},OPT_DEF,store.get('opt',{}));
 /* ============ CANVAS / VISTA ============ */
@@ -519,7 +571,6 @@ function hit(p,type){
   if(type==='remate'&&b.z<1.5)type='normal';
   if(type==='bandeja'&&b.z<1.45)type='normal';   // con bola baja, el botón hace un golpe normal (drive, revés o volea)
   const isAI=p.ctrl==='ai',perfect=!isAI&&q>=0.85,errMul=isAI?S.diff.err:(perfect?0.5:0.85);
-  if(!isAI&&S.fx)S.fx.push({x:p.x,y:p.y,t:performance.now(),txt:perfect?'¡PERFECTO!':q>=0.6?'BIEN':'FORZADO',col:perfect?'#50ff8c':q>=0.6?'#d8ff3e':'#ffb86b'});
   const sh=SH[type],sig=sh.err*(1.3-0.55*q)/C.ctl*errMul;
   let depth=sh.depth+(Math.random()-0.5)*sh.dvar;
   let ty=chooseY(p,type);
@@ -1501,12 +1552,12 @@ function drawPlayer(p){
   }
   const fa=p.face==null?(p.team===0?0:Math.PI):p.face,cf=Math.cos(fa),sf=Math.sin(fa),vxE=p.vxE||0,vyE=p.vyE||0;
   drawFigure(ctx,fx,fy,u*FIGK,C,{a:fa+(VIEW.mirror?Math.PI:0),e:gk(p.x)*0.85,gait:p.gait||0,mv:[-vxE*sf+vyE*cf,vxE*cf+vyE*sf,p.spdE||0],sw:p.swing});
-  const h=(C.h||1.8)*u*FIGK,ty=fy-h*1.04,fs=Math.max(10,Math.min(16,Math.round(u*0.34)));
-  ctx.font=`800 ${fs}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='bottom';
-  const label=isMe?'TÚ · '+C.name:C.name,tw=ctx.measureText(label).width+10,bh=fs+4;
-  ctx.fillStyle=isMe?'rgba(216,255,62,0.95)':'rgba(8,13,26,0.7)';rr(ctx,fx-tw/2,ty-bh,tw,bh,4);
-  ctx.fillStyle=isMe?'#111':'#fff';ctx.fillText(label,fx,ty-1);
-  if(S.phase==='serve'&&S.server===p.i){ctx.fillStyle='#d8ff3e';ctx.beginPath();ctx.arc(fx+tw/2+6,ty-bh/2,4,0,7);ctx.fill();}
+  const h=(C.h||1.8)*u*FIGK;drawTags(p,fx,fy-h*1.04,u);
+}
+// sin nombres en el partido: solo el emoji y un punto sobre quien saca
+function drawTags(p,fx,ty,u){
+  const bh=0;
+  if(S.phase==='serve'&&S.server===p.i&&!p.emo){ctx.fillStyle='#d8ff3e';ctx.beginPath();ctx.arc(fx,ty-6,4.5,0,7);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;ctx.stroke();}
   if(p.emo){const age=performance.now()-p.emo.t;
     if(age<2300){const sc2=age<180?0.5+0.5*age/180:1,al=age>1900?1-(age-1900)/400:1,bs=Math.max(30,Math.min(48,u*0.95))*sc2,by=ty-bh-10-bs/2;
       ctx.globalAlpha=al;ctx.fillStyle='rgba(255,255,255,0.96)';rr(ctx,fx-bs/2-5,by-bs/2-3,bs+10,bs+6,11);
@@ -1580,7 +1631,7 @@ function showEnd(){
   $('#endS').innerHTML=`<b>${esc(teamName(w))}</b> ganan · ${S.hist.map(x=>x[0]+'-'+x[1]).join(', ')}`;
   const guest=S.mode==='online-guest';$('#bAgain').style.display=(guest||S.tour)?'none':'';$('#endN').textContent=guest?'Esperando a que el anfitrión pida la revancha…':'';
   $('#bTourNext').style.display=S.tour?'':'none';$('#bMenu2').style.display=S.tour?'none':'';
-  if(S.tour){const C=S.tour==='circ'?CIRC:TOUR,um=C&&C.ev?userMatch(C.ev):null,fin=um&&um.r===C.ev.R.length-1;
+  if(S.tour){const C=TC(S.tour),um=C&&C.ev?userMatch(C.ev):null,fin=um&&um.r===C.ev.R.length-1;
     $('#endT').textContent=won?(fin?'¡CAMPEONES!':'¡A LA SIGUIENTE RONDA!'):'¡ELIMINADOS!';
     $('#endN').textContent=won?(fin?'Habéis ganado '+C.ev.name+' 🏆':'Pasáis de ronda en '+C.ev.name):'Mira cómo acaba el cuadro';}
   showScreen('end');
@@ -1646,7 +1697,7 @@ function buildOnline(){
   document.querySelectorAll('.coopo').forEach(e=>e.style.display=ON.mode==='coop'?'':'none');
 }
 function tryFullscreen(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().then(()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}).catch(()=>{});}catch(e){}}
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{audioInit();const g=b.dataset.go;if(g==='setup')buildSetup();if(g==='tour')buildTour();if(g==='circ')buildCirc();if(g==='roster')buildRoster();if(g==='train')buildTrain();if(g==='online')buildOnline();showScreen(g);});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{audioInit();const g=b.dataset.go;if(g==='setup')buildSetup();if(g==='tour')buildTour();if(g==='circ')buildCirc();if(g==='car')buildCar();if(g==='roster')buildRoster();if(g==='train')buildTrain();if(g==='online')buildOnline();showScreen(g);});
 $('#bPlay').onclick=()=>{audioInit();store.set('set',SET);if(isTouch)tryFullscreen();
   newMatch({mode:'bots',chars:[SET.me,SET.mate,SET.riv[0],SET.riv[1]],ctrls:['human','ai','ai','ai'],me:0,diff:SET.diff,len:SET.len,golden:SET.golden,outPlay:SET.out!==false});};
 $('#bTrain').onclick=()=>{audioInit();store.set('tr',TR);if(isTouch)tryFullscreen();newMatch({mode:'training',chars:[TR.me,'chilvi','galan','tapia'],ctrls:['human','none','machine','none'],me:0,diff:'normal',drill:TR.drill});};
@@ -1682,7 +1733,11 @@ function cleanChar(o){const r={};if(!o||typeof o!=='object')return r;
   if(r.num!=null)r.num=clamp(Math.round(r.num),0,99);if(!r.name)r.name='Jugador';return r;}
 let ED=null;
 function buildRoster(){picker($('#pkRoster'),null,[],k=>openEditor(k),true);}
-function openEditor(key){
+function openEditor(key,opt){
+  if(opt&&opt.car){const base=JSON.parse(JSON.stringify(CAR?CAR.look:CARD));
+    ED={key:null,isNew:false,custom:false,car:true,d:base,rot:Math.PI-0.5,drag:null};ED.d.accCol=ED.d.acc==='headband'?(ED.d.bandCol||'#ffffff'):(ED.d.capCol||'#ffffff');
+    $('#edTitle').textContent='Tu jugador de carrera';$('#edDel').style.display='none';$('#edReset').style.display='none';
+    renderEdCtl();showScreen('editor');requestAnimationFrame(edLoop);return;}
   const base=key?CHARS[key]:{name:'Mi jugador',num:10,h:1.78,side:'drive',lefty:false,skin:'#e3b892',hair:'#2b1a10',style:'short',beard:'',acc:'',capCol:'#ffffff',bandCol:'#ffffff',shirt:'#1565c0',shirt2:'#ffffff',pattern:'',collar:'round',shorts:'#151515',shoe:'#ffffff',shoeAcc:'#1565c0',rk:'#151515',rk2:'#f4d03f',spd:1.05,pow:1.05,ctl:1.05,tag:'Creado por ti'};
   const isNew=!key,custom=isNew||!!CHARS[key].custom;
   ED={key,isNew,custom,d:JSON.parse(JSON.stringify(base)),rot:Math.PI-0.5,drag:null};
@@ -1707,7 +1762,8 @@ function renderEdCtl(){
   h+=edRow('Camiseta',edSw('shirt',KIT))+edRow('Detalles',edSw('shirt2',KIT))+edRow('Estampado',edSeg('pattern',[['','Liso'],['stripes','Rayas'],['diag','Diagonal']]));
   h+=edRow('Pantalón',edSw('shorts',KIT))+edRow('Zapatillas',edSw('shoe',KIT))+edRow('Color zapas',edSw('shoeAcc',KIT));
   h+=edRow('Pala',edSw('rk',KIT))+edRow('Color pala',edSw('rk2',KIT));
-  if(ED.custom){const p=ED.pts,used=p.spd+p.pow+p.ctl;
+  if(ED.car)h+=`<div class="note">En la carrera empiezas desde abajo: tus estadísticas suben a medida que ganes partidos y con tus patrocinadores.</div>`;
+  else if(ED.custom){const p=ED.pts,used=p.spd+p.pow+p.ctl;
     h+=`<h3>Estadísticas · puntos libres: <span id="edFree">${STAT_BUDGET-used}</span></h3>`;
     for(const [k,l] of [['spd','Velocidad'],['pow','Potencia'],['ctl','Control']])h+=edRow(l,`<input type="range" data-st="${k}" min="0" max="10" value="${p[k]}"> <b id="edSt_${k}">${p[k]}</b>`);}
   else h+=`<div class="note">Las estadísticas de ${esc(d.name)} son las de su nivel real; aquí solo cambias su aspecto.</div>`;
@@ -1743,6 +1799,9 @@ $('#edCv').addEventListener('pointermove',e=>{if(ED&&ED.drag)ED.rot=ED.drag.r+(e
 const edUp=()=>{if(ED)ED.drag=null;};$('#edCv').addEventListener('pointerup',edUp);$('#edCv').addEventListener('pointercancel',edUp);
 $('#edSave').onclick=()=>{
   const d=ED.d;d.name=(String(d.name||'').trim()||'Jugador').slice(0,14);d.num=clamp(parseInt(d.num)||0,0,99);if(d.acc==='headband')d.bandCol=d.accCol||d.bandCol;else if(d.acc)d.capCol=d.accCol||d.capCol;delete d.accCol;
+  if(ED.car){const look=cleanChar(d);delete look.spd;delete look.pow;delete look.ctl;
+    if(CAR){CAR.look=look;carApply();saveCar();}else{CARD=look;store.set('card',CARD);}
+    ED=null;buildCar();showScreen('car');return;}
   let id=ED.key;
   if(ED.custom){d.spd=0.85+ED.pts.spd*0.04;d.pow=0.85+ED.pts.pow*0.04;d.ctl=0.85+ED.pts.ctl*0.04;
     if(!id){let n=1;while(CHARS['c'+n])n++;id='c'+n;}d.id=id;
@@ -1751,7 +1810,7 @@ $('#edSave').onclick=()=>{
     if(Object.keys(mod).length)MODS[id]=mod;else delete MODS[id];CHARS[id]=Object.assign({},ORIG[id],mod);store.set('mods',MODS);}
   delete PCACHE[id];refreshKeys();ED=null;buildRoster();showScreen('roster');
 };
-$('#edCancel').onclick=()=>{ED=null;buildRoster();showScreen('roster');};
+$('#edCancel').onclick=()=>{const car=ED&&ED.car;ED=null;if(car){buildCar();showScreen('car');}else{buildRoster();showScreen('roster');}};
 $('#edReset').onclick=()=>{const id=ED.key;delete MODS[id];CHARS[id]=Object.assign({},ORIG[id]);store.set('mods',MODS);delete PCACHE[id];ED=null;buildRoster();showScreen('roster');};
 $('#edDel').onclick=()=>{const b=$('#edDel');if(!b.dataset.ok){b.dataset.ok='1';b.textContent='¿Seguro? Pulsa otra vez';return;}b.dataset.ok='';b.textContent='Eliminar';
   const id=ED.key;delete CHARS[id];CUSTOM=CUSTOM.filter(x=>x.id!==id);store.set('custom',CUSTOM);delete PCACHE[id];refreshKeys();ED=null;buildRoster();showScreen('roster');};
@@ -1795,6 +1854,7 @@ function settle(ev){
     if(m.w==null&&m.a!=null&&m.b!=null){if(m.a===-1&&m.b===-1)m.w=-1;else if(m.a===-1){m.w=m.b;m.bye=true;}else if(m.b===-1){m.w=m.a;m.bye=true;}}});
   const f=ev.R[ev.R.length-1][0];if(f.w!=null)ev.champ=f.w;
 }
+const TC=kind=>kind==='circ'?CIRC:kind==='car'?CAR:TOUR;
 const evRound=ev=>{for(let r=0;r<ev.R.length;r++)if(ev.R[r].some(m=>m.w==null))return r;return ev.R.length;};
 function userMatch(ev){for(let r=0;r<ev.R.length;r++)for(const m of ev.R[r])if(m.w==null&&(m.a===0||m.b===0)&&m.a!=null&&m.b!=null&&m.a>=0&&m.b>=0)return {r,m};return null;}
 const userIn=ev=>ev.R.some(rd=>rd.some(m=>m.a===0||m.b===0));
@@ -1813,21 +1873,28 @@ function prepareEvent(C){const ev=C.ev;
 function eventResults(ev){const res={},L=ev.R.length;
   ev.R.forEach((rd,r)=>rd.forEach(m=>{if(m.bye||m.w==null||m.a<0||m.b<0)return;const lo=m.w===m.a?m.b:m.a;res[lo]=L-r;}));
   if(ev.champ>=0)res[ev.champ]=0;return res;}
-function roundDiff(C){const ev=C.ev,um=userMatch(ev);const left=um?ev.R.length-um.r:1;return DIFFS[Math.min(2,DIFFS.indexOf(C.cfg.diff)+(left<=2?1:0))];}
+function roundDiff(C){const ev=C.ev,um=userMatch(ev);const left=um?ev.R.length-um.r:1;return DIFFS[clamp(DIFFS.indexOf(C.cfg.diff)+(ev.dOff||0)+(left<=2?1:0),0,2)];}
 function playUserMatch(kind){
-  const C=kind==='circ'?CIRC:TOUR;if(!C||!C.ev)return;const um=userMatch(C.ev);if(!um)return;
+  const C=TC(kind);if(!C||!C.ev)return;const um=userMatch(C.ev);if(!um)return;
   const me=C.pairs[0],opp=C.pairs[um.m.a===0?um.m.b:um.m.a],c=C.cfg;
   if(isTouch)tryFullscreen();
   newMatch({mode:'bots',tour:kind,chars:[me.p[0],me.p[1],opp.p[0],opp.p[1]],ctrls:['human','ai','ai','ai'],me:0,diff:roundDiff(C),len:c.len,golden:c.golden,outPlay:c.out!==false});
 }
-function afterUserMatch(){
-  if(!S||!S.tour||!S.over)return;const kind=S.tour,C=kind==='circ'?CIRC:TOUR;if(!C||!C.ev)return;
-  const um=userMatch(C.ev);
-  if(um){const won=S.over.winner===0,m=um.m;m.sc=S.hist.map(x=>m.a===0?[x[0],x[1]]:[x[1],x[0]]);m.w=won?0:(m.a===0?m.b:m.a);settle(C.ev);
-    simRoundExceptUser(C,um.r);
-    if(!won){C.ev.alive=false;simAll(C);}else prepareEvent(C);}
+// resultado de un partido tuyo en un cuadro (jugado o simulado)
+function resolveUserMatch(kind,won,hist){
+  const C=TC(kind),um=userMatch(C.ev);if(!um)return;const m=um.m,op=C.pairs[m.a===0?m.b:m.a];
+  m.sc=hist&&hist.length?hist.map(x=>m.a===0?[x[0],x[1]]:[x[1],x[0]]):genScore(C.cfg.len,m.a===0?won:!won);
+  m.w=won?0:(m.a===0?m.b:m.a);settle(C.ev);
+  if(kind==='car')carMatchDone(won,op);
+  simRoundExceptUser(C,um.r);
+  if(!won){C.ev.alive=false;simAll(C);}else prepareEvent(C);
   if(kind==='circ'&&C.ev.champ!=null)finishCircEvent();
-  kind==='circ'?saveCirc():saveTour();
+  if(kind==='car'&&C.ev&&C.ev.champ!=null)finishCarEvent();
+  kind==='circ'?saveCirc():kind==='car'?saveCar():saveTour();
+}
+function afterUserMatch(){
+  if(!S||!S.tour||!S.over)return;const kind=S.tour,C=TC(kind);if(!C||!C.ev)return;
+  if(userMatch(C.ev))resolveUserMatch(kind,S.over.winner===0,S.hist);
   S=null;paused=false;$('#game').classList.remove('on');setHint('');
   if(kind==='circ'&&!CIRC.ev){buildCirc();showScreen('circ');}else showBracket(kind);
 }
@@ -1844,21 +1911,23 @@ function boxHTML(C,m){
   return `<div class="mt${(m.a===0||m.b===0)?' me':''}">${rows}</div>`;
 }
 function showBracket(kind){
-  const C=kind==='circ'?CIRC:TOUR;if(!C||!(C.ev||C.last)){kind==='circ'?(buildCirc(),showScreen('circ')):(buildTour(),showScreen('tour'));return;}
+  const C=TC(kind);if(!C||!(C.ev||C.last)){kind==='circ'?(buildCirc(),showScreen('circ')):kind==='car'?(buildCar(),showScreen('car')):(buildTour(),showScreen('tour'));return;}
   const ev=C.ev||C.last;
-  $('#brSub').textContent=kind==='circ'?`Circuito · ${ev.cat==='Finals'?'Finals':ev.cat} · torneo ${Math.min(CIRC.idx+1,CAL.length)} de ${CAL.length}`:'Modo torneo';
+  $('#brSub').textContent=kind==='circ'?`Circuito · ${ev.cat==='Finals'?'Finals':ev.cat} · torneo ${Math.min(CIRC.idx+1,CAL.length)} de ${CAL.length}`:kind==='car'?`Carrera · temporada ${CAR.lastS||CAR.season} · ${ev.cat==='FIP'?'FIP Gold (cuadro previo)':ev.cat}`:'Modo torneo';
   $('#brTitle').textContent=ev.name;
   let html='';ev.R.forEach(rd=>{html+=`<div class="rnd"><h3>${RNAMES(rd.length)}</h3>${rd.map(m=>boxHTML(C,m)).join('')}</div>`;});
   if(ev.champ!=null&&ev.champ>=0)html+=`<div class="rnd"><div class="champ"><div class="tro">🏆</div>${esc(pairName(C.pairs[ev.champ]))}</div></div>`;
   $('#brBody').innerHTML=html;
-  const play=$('#brPlay'),back=$('#brBack');back.textContent=kind==='circ'?'Circuito':'Menú';back.onclick=()=>{if(kind==='circ'){buildCirc();showScreen('circ');}else showScreen('menu');};
-  const um=C.ev?userMatch(C.ev):null;
+  const play=$('#brPlay'),back=$('#brBack'),simB=$('#brSim');back.textContent=kind==='circ'?'Circuito':kind==='car'?'Carrera':'Menú';back.onclick=()=>{if(kind==='circ'){buildCirc();showScreen('circ');}else if(kind==='car'){buildCar();showScreen('car');}else showScreen('menu');};
+  const um=C.ev?userMatch(C.ev):null;simB.style.display='none';
   if(um){const opp=C.pairs[um.m.a===0?um.m.b:um.m.a];
-    $('#brNote').innerHTML=`${RNAMES(ev.R[um.r].length)}: <b>${esc(pairName(C.pairs[0]))}</b> contra <b>${esc(pairName(opp))}</b> · nivel ${DIFN[roundDiff(C)]}`;
-    play.style.display='';play.textContent=um.r===ev.R.length-1?'¡Jugar la final!':'Jugar '+RNAMES(ev.R[um.r].length).toLowerCase();play.onclick=()=>{audioInit();playUserMatch(kind);};}
+    $('#brNote').innerHTML=`${RNAMES(ev.R[um.r].length)}: <b>${esc(pairName(C.pairs[0]))}</b> contra <b>${esc(pairName(opp))}</b> · nivel ${DIFN[roundDiff(C)]}`+(kind==='car'?` · si lo simulas, ganas un ${Math.round(carWinP(C,um.m)*100)}% de las veces`:'');
+    play.style.display='';play.textContent=um.r===ev.R.length-1?'¡Jugar la final!':'Jugar '+RNAMES(ev.R[um.r].length).toLowerCase();play.onclick=()=>{audioInit();playUserMatch(kind);};
+    if(kind==='car'){simB.style.display='';simB.onclick=()=>{const won=Math.random()<carWinP(C,um.m);resolveUserMatch('car',won,null);showBracket('car');};}}
   else{const res=eventResults(ev),st=res[0];
     $('#brNote').innerHTML=st===0?'<b>¡Sois campeones!</b> 🏆':(st!=null?`Habéis llegado a: <b>${STAGEN[st]}</b>`:'No estabais clasificados para este torneo')+(ev.champ>=0?` · Campeones: <b>${esc(pairName(C.pairs[ev.champ]))}</b>`:'');
     if(kind==='circ'){play.style.display='';play.textContent='Ver circuito';play.onclick=()=>{buildCirc();showScreen('circ');};}
+    else if(kind==='car'){play.style.display='';play.textContent='Ver carrera';play.onclick=()=>{buildCar();showScreen('car');};}
     else{play.style.display='';play.textContent='Nuevo torneo';play.onclick=()=>{TOUR=null;saveTour();buildTour();showScreen('tour');};}}
   showScreen('bracket');
 }
@@ -1912,10 +1981,269 @@ function buildCirc(){
   if(CIRC.ev||CIRC.idx<CAL.length){if(!CIRC.ev&&CAL[CIRC.idx].c!=='Finals')$('#circInfo').innerHTML=`Vais <b>${pos}º</b> en el ranking · ${CAL[CIRC.idx].c}: el campeón suma ${PTSCAT[CAL[CIRC.idx].c][0]} puntos`;if(CIRC.ev)$('#circInfo').innerHTML=`Vais <b>${pos}º</b> en el ranking`;}
   const q=$('#bCircQuit');q.textContent='Abandonar temporada';q.onclick=()=>{if(q.dataset.ok){CIRC=null;saveCirc();q.dataset.ok='';buildCirc();}else{q.dataset.ok='1';q.textContent='¿Seguro? Pulsa otra vez';}};
 }
+/* ============ MODO CARRERA ============ */
+const CAR_WIN=9;                                   // el ranking suma los últimos 9 torneos
+const CAR_PTS={...PTSCAT,FIP:[250,150,90,45,20]};
+const AM_FIRST=['Pablo','Javi','Dani','Sergio','Álex','Marcos','Rubén','Iván','Hugo','Adrián','Mario','Nico','Tomás','Bruno','Gonzalo','Fede','Lucas','Mateo','Facu','Diego','Raúl','Óscar','Joan','Pau','Marc','Unai','Iker','Santi','Leo','Martín'];
+const AM_LAST=['Navas','Ortega','Molina','Castro','Rubio','Vidal','Ferrer','Serra','Peña','Rey','Soto','Cano','Vega','Morales','Herrera','Iglesias','Medina','Garrido','Pastor','Lozano','Prieto','Bravo','Campos','Fuentes','Arias','Mora','Calvo','Duarte','Robles','Salas'];
+// patrocinadores (marcas inventadas): r = mejor ranking que hay que haber alcanzado
+const SPONS={
+  ropa:[{id:'lof',n:'La Orden del Friki',r:999,kit:{shirt:'#151515',shirt2:'#d8ff3e',shorts:'#151515',pattern:''},b:{ctl:0.01}},
+        {id:'rafaga',n:'Ráfaga Sport',r:35,kit:{shirt:'#f2711c',shirt2:'#ffffff',shorts:'#1f2b44',pattern:''},b:{spd:0.02}},
+        {id:'nebula',n:'Nébula Wear',r:15,kit:{shirt:'#6a3fb5',shirt2:'#2ec4b6',shorts:'#151515',pattern:'diag'},b:{spd:0.03,ctl:0.01}},
+        {id:'titan',n:'Titán Pro',r:5,kit:{shirt:'#1f2b44',shirt2:'#f4d03f',shorts:'#1f2b44',pattern:'stripes'},b:{spd:0.03,pow:0.03}}],
+  pala:[{id:'barrio',n:'Palas del Barrio',r:999,kit:{rk:'#8a5a2b',rk2:'#f3e2c0'},b:{ctl:0.01}},
+        {id:'volt',n:'Volt Padel',r:40,kit:{rk:'#151515',rk2:'#f4d03f'},b:{pow:0.02}},
+        {id:'cometa',n:'Cometa Rackets',r:20,kit:{rk:'#e63946',rk2:'#ffffff'},b:{pow:0.02,ctl:0.02}},
+        {id:'carbono',n:'Carbono X',r:6,kit:{rk:'#151515',rk2:'#39d3ff'},b:{pow:0.04,ctl:0.03}}],
+  zapas:[{id:'grip',n:'Grip Run',r:30,kit:{shoe:'#ffffff',shoeAcc:'#2ec4b6'},b:{spd:0.02}},
+        {id:'aero',n:'Aero Step',r:10,kit:{shoe:'#151515',shoeAcc:'#d8ff3e'},b:{spd:0.03,ctl:0.01}}]};
+const SLOTN={ropa:'Ropa',pala:'Pala',zapas:'Zapatillas'},STN={spd:'Velocidad',pow:'Potencia',ctl:'Control'};
+const sponBy=(slot,id)=>(SPONS[slot]||[]).find(x=>x.id===id)||null;
+const st100=v=>Math.round((v-0.8)/0.5*100);
+const CAR_BASE=0.9,CAR_MAX=1.32,CAR_STEP=0.02;
+let CARD=store.get('card',{name:'Mi jugador',num:10,h:1.78,side:'drive',lefty:false,skin:'#e3b892',hair:'#2b1a10',style:'short',beard:'',acc:'',capCol:'#ffffff',bandCol:'#ffffff',shirt:'#1565c0',shirt2:'#ffffff',pattern:'',collar:'round',shorts:'#151515',shoe:'#ffffff',shoeAcc:'#1565c0',rk:'#151515',rk2:'#f4d03f'});
+const KS=store.get('ks',{diff:'normal',len:'quick',golden:false,out:true});
+let CAR=store.get('car',null);
+const saveCar=()=>store.set('car',CAR);
+const carAll=()=>[CAR.me,...CAR.pool];
+const carPts=k=>(CAR.hist[k]||[]).reduce((a,b)=>a+b,0);
+const lvlOf=k=>{const C=CHARS[k];return C?(C.spd+C.pow+C.ctl)/3:0;};
+function carRanking(){return carAll().slice().sort((a,b)=>carPts(b)-carPts(a)||lvlOf(b)-lvlOf(a));}
+const carRankOf=k=>carRanking().indexOf(k)+1;
+function carBonus(){const b={spd:0,pow:0,ctl:0};for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp)for(const s in sp.b)b[s]+=sp.b[s];}return b;}
+function carApply(){
+  const C=Object.assign(cleanChar(CAR.look),{car:true,tag:'Tu carrera'});
+  for(const sl in SPONS){const sp=sponBy(sl,CAR.spon[sl]);if(sp)Object.assign(C,sp.kit);}
+  const sr=sponBy('ropa',CAR.spon.ropa);if(sr){if(C.acc==='headband')C.bandCol=sr.kit.shirt2;else if(C.acc)C.capCol=sr.kit.shirt;}
+  const b=carBonus();for(const s of ['spd','pow','ctl'])C[s]=Math.min(1.4,CAR.base[s]+b[s]);
+  CHARS[CAR.me]=C;delete PCACHE[CAR.me];
+}
+function carRegister(){for(const k in CAR.chars){const c=CAR.chars[k];CHARS[k]=Object.assign(cleanChar(c),{car:true,am:true,tag:'Amateur',spd:c.spd,pow:c.pow,ctl:c.ctl});}carApply();refreshKeys();}
+function carUnregister(){if(!CAR)return;for(const k in CAR.chars){delete CHARS[k];delete PCACHE[k];}delete CHARS[CAR.me];delete PCACHE[CAR.me];refreshKeys();}
+function genAmateur(i,lvl,names){
+  const rnd=a=>a[Math.floor(Math.random()*a.length)],sh=rnd(KIT);let s2=rnd(KIT);if(s2===sh)s2=sh==='#ffffff'?'#151515':'#ffffff';
+  const st=()=>r2(clamp(lvl+(Math.random()-0.5)*0.08,0.84,1.1));
+  return {name:names[1],full:names[0]+' '+names[1],num:1+Math.floor(Math.random()*40),h:r2(1.7+Math.random()*0.2),lefty:Math.random()<0.15,side:i%2?'reves':'drive',
+    skin:rnd(SKINS.slice(0,6)),hair:rnd(HAIRC.slice(0,6)),style:rnd(['short','short','volume','curly','buzz','buzz','long','bald']),beard:rnd(['','','stubble','full']),acc:rnd(['','','','cap','capback','headband']),
+    capCol:rnd(KIT),bandCol:rnd(KIT),shirt:sh,shirt2:s2,pattern:rnd(['','','stripes','diag']),collar:'round',shorts:rnd(['#151515','#1f2b44','#ffffff',sh]),shoe:rnd(['#ffffff','#151515','#f3f3f3']),shoeAcc:rnd(KIT),rk:rnd(KIT),rk2:rnd(KIT),
+    spd:st(),pow:st(),ctl:st()};
+}
+function spread(total){const h=[];for(let i=0;i<CAR_WIN;i++)h.push(Math.max(0,Math.round(total/CAR_WIN*(0.6+Math.random()*0.8)/5)*5));return h;}
+function newCar(){
+  const fi=AM_FIRST.slice().sort(()=>Math.random()-0.5),la=AM_LAST.slice().sort(()=>Math.random()-0.5),chars={},N=27;
+  for(let i=0;i<N;i++){const lvl=i===0?0.88:0.86+0.16*(i/(N-1));chars['am'+i]=genAmateur(i,lvl,[fi[i%fi.length],la[i]]);}
+  const pros=[].concat(...PRO_PAIRS).filter(k=>CHARS[k]);
+  CAR={v:1,me:'car_me',look:JSON.parse(JSON.stringify(CARD)),cfg:{...KS},season:1,week:0,n:0,mate:'am0',chars,
+    pool:[...pros,...Object.keys(chars)],duo:[],hist:{},base:{spd:CAR_BASE,pow:CAR_BASE,ctl:CAR_BASE},sp:0,spon:{ropa:null,pala:null,zapas:null},
+    offers:[],news:[],res:[],seasons:[],best:99,wins:0,losses:0,titles:0,mw:0,ev:null,side:null,last:null,pairs:null};
+  for(const rp of PRO_PAIRS)CAR.duo.push(rp.slice());
+  for(let i=1;i+1<N;i+=2)CAR.duo.push(['am'+i,'am'+(i+1)]);
+  for(const k of pros)CAR.hist[k]=spread((ORIG[k].pts||3000)*0.3);
+  for(const k in chars)CAR.hist[k]=spread(Math.max(30,(lvlOf2(chars[k])-0.84)*2600));
+  CAR.hist[CAR.me]=[];
+  carRegister();CAR.best=carRankOf(CAR.me);
+  carNews(`Empiezas tu carrera con <b>${esc(CHARS.am0.full)}</b> de compañero. ¡A por el número 1!`);
+  carOffers(0,true);saveCar();
+}
+function lvlOf2(c){return (c.spd+c.pow+c.ctl)/3;}
+function carNews(t){CAR.news.unshift(`T${CAR.season}·S${CAR.week+1}: ${t}`);CAR.news.splice(8);}
+function carPairs(){
+  const me=CAR.me,used=new Set([me,CAR.mate]),pairs=[{p:[me,CAR.mate],user:true}],duo=[];
+  for(const d of CAR.duo)if(d.every(k=>!used.has(k)&&CHARS[k])){duo.push(d.slice());d.forEach(k=>used.add(k));}
+  const singles=CAR.pool.filter(k=>!used.has(k)&&CHARS[k]).sort((a,b)=>carPts(b)-carPts(a));
+  for(let i=0;i+1<singles.length;i+=2){let a=singles[i],b=singles[i+1];if(CHARS[a].side==='reves'&&CHARS[b].side!=='reves')[a,b]=[b,a];duo.push([a,b]);}
+  CAR.duo=duo;duo.forEach(d=>pairs.push({p:d}));
+  pairs.forEach((q,i)=>{q.id=i;q.fip=carPts(q.p[0])+carPts(q.p[1]);});
+  return pairs;
+}
+function carNext(){
+  if(!CAR||CAR.ev)return;
+  const e=CAL[CAR.week],pairs=carPairs(),ord=pairs.map(p=>p.id).sort((a,b)=>pairs[b].fip-pairs[a].fip||pairLvl(pairs[b])-pairLvl(pairs[a]));
+  const nM=e.c==='Finals'?8:16,main=ord.slice(0,nM),ch=ord.slice(nM,nM+16),city=e.n.replace(/ (P1|P2|Major)$/,'').replace('Premier Padel ','');
+  CAR.pairs=pairs;CAR.lastS=CAR.season;CAR.mw=0;
+  const evM=makeEvent(e.n,e.c,main),evC=makeEvent('FIP Gold '+city,'FIP',ch);
+  const inC=ch.includes(0);CAR.ev=inC?evC:evM;CAR.side=inC?evM:evC;CAR.ev.dOff=inC?-1:0;
+  if(CAR.side.R[0].some(m=>m.a>=0||m.b>=0))simAll({pairs,cfg:CAR.cfg,ev:CAR.side});
+  prepareEvent(CAR);
+  if(CAR.ev.champ!=null)finishCarEvent();
+  saveCar();showBracket('car');
+}
+function carWinP(C,m){const me=C.pairs[0],op=C.pairs[m.a===0?m.b:m.a];return clamp(1/(1+Math.exp(-((pairLvl(me)-pairLvl(op))*7+((me.fip||0)-(op.fip||0))/30000))),0.03,0.97);}
+function carMatchDone(won,op){
+  if(won){CAR.wins++;CAR.mw++;const merit=op&&op.fip>CAR.pairs[0].fip;CAR.sp+=merit?2:1;}else CAR.losses++;
+}
+function finishCarEvent(){
+  const gain={},evs=[CAR.ev,CAR.side].filter(Boolean);
+  for(const ev of evs){if(ev.champ==null)continue;const res=eventResults(ev),tab=CAR_PTS[ev.cat]||CAR_PTS.FIP;
+    for(const id in res){const pts=tab[res[id]]||0;for(const k of CAR.pairs[id].p)gain[k]=(gain[k]||0)+pts;}}
+  for(const k of carAll()){const h=CAR.hist[k]||(CAR.hist[k]=[]);h.push(gain[k]||0);while(h.length>CAR_WIN)h.shift();}
+  const res=eventResults(CAR.ev),st=res[0]==null?-1:res[0],big=CAR.ev.cat==='Major'||CAR.ev.cat==='Finals';
+  if(st===0){CAR.titles++;CAR.sp+=CAR.ev.cat==='FIP'?1:(big?3:2);carNews(`🏆 ¡Campeones de <b>${esc(CAR.ev.name)}</b>!`);}
+  CAR.res[CAR.week]={name:CAR.ev.name,cat:CAR.ev.cat,user:st,gain:gain[CAR.me]||0};
+  const before=CAR.best,r=carRankOf(CAR.me);
+  if(r<CAR.best){CAR.best=r;
+    for(const sl in SPONS)for(const sp of SPONS[sl])if(sp.r<999&&r<=sp.r&&before>sp.r)carNews(`💼 <b>${sp.n}</b> quiere patrocinarte (${SLOTN[sl].toLowerCase()}).`);
+    if(r===1)carNews('👑 <b>¡NÚMERO 1 DEL MUNDO!</b>');}
+  carOffers(st,false);
+  CAR.last=CAR.ev;CAR.lastSide=CAR.side;CAR.ev=null;CAR.side=null;CAR.n++;CAR.week++;
+  if(CAR.week>=CAL.length){const s0=CAR.season;CAR.seasons.push({s:s0,rank:r,titles:CAR.res.filter(x=>x&&x.user===0).length});CAR.week=0;CAR.season++;CAR.res=[];carNews(`Fin de la temporada ${s0}: acabas <b>#${r}</b> del ranking.`);}
+}
+// jugadores mejor clasificados que se interesan por jugar contigo
+function carOffers(st,first){
+  CAR.offers=CAR.offers.filter(o=>o.until>CAR.n&&o.k!==CAR.mate&&CHARS[o.k]);
+  const rk=carRanking(),r=rk.indexOf(CAR.me)+1,form=CAR.mw+(st===0?3:0)+(st===1?1:0);
+  let n=first?2:(form>=4?2:form>=1?1:(Math.random()<0.25?1:0));
+  const span=first?8:Math.min(30,4+form*3),lo=Math.max(1,r-span);
+  const cand=rk.slice(lo-1,Math.max(lo-1,r-1)).filter(k=>k!==CAR.mate&&!CAR.offers.some(o=>o.k===k)&&!(rk.indexOf(k)<3&&r>8));
+  while(n-->0&&cand.length){const k=cand.splice(Math.floor(Math.random()*cand.length),1)[0];CAR.offers.push({k,until:CAR.n+3});
+    if(!first)carNews(`🤝 <b>${esc(CHARS[k].full||CHARS[k].name)}</b> (#${rk.indexOf(k)+1}) quiere ser tu compañero.`);}
+}
+function carSetMate(k){if(!CHARS[k]||k===CAR.me||CAR.ev)return;const old=CAR.mate;CAR.mate=k;CAR.offers=CAR.offers.filter(o=>o.k!==k);
+  carNews(`Nuevo compañero: <b>${esc(CHARS[k].full||CHARS[k].name)}</b>${old&&CHARS[old]?' (dejas a '+esc(CHARS[old].name)+')':''}.`);saveCar();}
+function carStatRow(k,v,bon,canUp){return `<div class="stat"><b>${STN[k]}</b><i><u style="width:${clamp(st100(v),3,100)}%"></u></i><span class="sv2">${st100(v)}</span>${bon?`<span class="bon">+${Math.round(bon/0.005)}</span>`:'<span class="bon"></span>'}${canUp?`<button class="plus" data-act="plus" data-st="${k}">+</button>`:''}</div>`;}
+const kBtn=(act,k,lab,cls)=>`<button class="${cls==null?'ok':cls}" data-act="${act}" data-k="${k}">${lab}</button>`;
+function carTile(k,extra,btns){const C=CHARS[k];return `<div class="offer"><img src="${portraitURL(k)}" alt=""><div class="ot"><b>${esc(C.full||C.name)}</b> · #${carRankOf(k)} · nivel ${st100(lvlOf(k))}<br>${extra||''}</div>${btns||''}</div>`;}
+let carMatesOpen=false;
+function buildCar(){
+  const has=!!CAR;$('#carSetup').style.display=has?'none':'';$('#carHub').style.display=has?'':'none';
+  if(!has){CHARS.__card=Object.assign(cleanChar(CARD),{car:true,spd:CAR_BASE,pow:CAR_BASE,ctl:CAR_BASE});delete PCACHE.__card;
+    const C=CHARS.__card;$('#carDraft').innerHTML=`<img src="${portraitURL('__card')}" alt=""><div class="dt"><div class="nm">${esc(C.name)} <span class="tg">#${C.num||0}</span></div><div class="inf">${(C.h||1.8).toFixed(2).replace('.',',')} m · ${C.lefty?'zurdo':'diestro'} · ${C.side==='reves'?'revés':'drive'} · empieza con nivel ${st100(CAR_BASE)}</div>${statBars(C)}</div>`;
+    optSegs(KS,'#sgKDiff','#sgKLen','#sgKGold','#sgKOut');return;}
+  const me=CHARS[CAR.me],rk=carRanking(),r=rk.indexOf(CAR.me)+1,b=carBonus(),mate=CAR.mate,e=CAL[CAR.week];
+  let h=`<div class="sub">Temporada ${CAR.season} · torneo ${CAR.week+1} de ${CAL.length}</div>`;
+  h+=`<div class="kbig">${r===1?'👑 ':''}#${r} DEL RANKING · ${carPts(CAR.me)} PUNTOS</div><div class="rivals">Mejor puesto: <b>#${CAR.best}</b> · ${CAR.wins} victorias, ${CAR.losses} derrotas · ${CAR.titles} títulos</div>`;
+  h+=`<div class="kgrid"><div class="detail"><img src="${portraitURL(CAR.me)}" alt=""><div class="dt"><div class="nm">${esc(me.name)} <span class="tg">Tú</span></div>`;
+  h+=`<div class="inf">Puntos de mejora: <b style="color:var(--acc)">${CAR.sp}</b>${CAR.sp?' · pulsa + para subir':' · se ganan venciendo partidos'}</div>`;
+  for(const k of ['spd','pow','ctl'])h+=carStatRow(k,me[k],b[k],CAR.sp>0&&CAR.base[k]<CAR_MAX-1e-6);
+  h+=`<button class="link" data-act="look" style="align-self:flex-start;padding:2px 0">Cambiar aspecto</button></div></div>`;
+  h+=`<div class="detail"><img src="${portraitURL(mate)}" alt=""><div class="dt"><div class="nm">${esc(CHARS[mate].name)} <span class="tg">Compañero · #${carRankOf(mate)}</span></div><div class="inf">${esc(CHARS[mate].full||'')}${CHARS[mate].am?' · amateur':''}</div>${statBars(CHARS[mate])}
+    ${CAR.ev?'<div class="inf">Podrás cambiar de compañero al acabar el torneo.</div>':`<button class="big" data-act="mates" style="min-width:0;padding:6px 12px;font-size:14px;align-self:flex-start">${carMatesOpen?'Cerrar':'Cambiar compañero'}</button>`}</div></div></div>`;
+  if(CAR.offers.length){h+=`<div class="panel klist"><h3>Te quieren de compañero</h3>`;for(const o of CAR.offers)h+=carTile(o.k,`Oferta válida ${Math.max(1,o.until-CAR.n)} torneo(s)`+(CAR.ev?' · podrás aceptarla al acabar el torneo':''),(CAR.ev?'':kBtn('acc',o.k,'Aceptar'))+kBtn('dec',o.k,'Rechazar',''));h+=`</div>`;}
+  if(carMatesOpen&&!CAR.ev){const free=rk.slice(r).filter(k=>k!==mate&&!CAR.offers.some(o=>o.k===k)).slice(0,12);
+    h+=`<div class="panel klist"><h3>Elige con quién jugar</h3><div class="note">Aceptan jugar contigo los que te han hecho una oferta y cualquiera que esté por debajo de ti en el ranking.</div>`;
+    for(const o of CAR.offers)h+=carTile(o.k,'Te ha pedido jugar juntos',kBtn('pick',o.k,'Elegir'));
+    for(const k of free)h+=carTile(k,CHARS[k].am?'Amateur':'Profesional',kBtn('pick',k,'Elegir',''));
+    if(!free.length&&!CAR.offers.length)h+=`<div class="note">Todavía nadie más quiere jugar contigo. ¡Gana partidos y vendrán las ofertas!</div>`;
+    h+=`</div>`;}
+  h+=`<div class="panel" style="width:100%;max-width:680px"><h3>Patrocinadores</h3>`;
+  for(const sl in SPONS){h+=`<div class="sub" style="letter-spacing:1.5px;font-size:11px">${SLOTN[sl]}</div><div class="spw">`;
+    h+=`<button class="spb${!CAR.spon[sl]?' on':''}" data-act="spon" data-slot="${sl}" data-id=""><b>Sin patrocinador</b>${sl==='ropa'?'Tu ropa':sl==='pala'?'Tu pala':'Tus zapatillas'}</button>`;
+    for(const sp of SPONS[sl]){const ok=sp.r>=999||CAR.best<=sp.r,bon=Object.entries(sp.b).map(([s,v])=>`+${Math.round(v/0.005)} ${STN[s].slice(0,3).toLowerCase()}.`).join(' ');
+      const sw=Object.values(sp.kit).filter(v=>/^#/.test(v)).slice(0,3).map(c=>`<span class="sw2" style="background:${c}"></span>`).join('');
+      h+=`<button class="spb${CAR.spon[sl]===sp.id?' on':''}${ok?'':' lock'}" data-act="spon" data-slot="${sl}" data-id="${sp.id}"><b>${esc(sp.n)}</b>${sw} ${bon}${ok?'':` · top ${sp.r}`}</button>`;}
+    h+=`</div>`;}
+  h+=`</div>`;
+  const next=CAR.ev?`Continuar ${CAR.ev.name}`:`Jugar ${e.n}`;
+  h+=`<div class="row"><button class="big" data-act="menu">Menú</button><button class="big pri" data-act="play">${esc(next)}</button></div>`;
+  if(!CAR.ev)h+=`<div class="note">${e.c==='Finals'?'Las Finals solo las juegan las 8 mejores parejas; el resto juega el FIP Gold.':'Las 16 mejores parejas del ranking juegan el cuadro principal ('+e.c+'); las demás, el FIP Gold de esa semana.'} El ranking de pareja es la suma de los puntos de los dos.</div>`;
+  if(CAR.news.length)h+=`<div class="news">${CAR.news.map(t=>`<div>${t}</div>`).join('')}</div>`;
+  h+=`<div class="row" style="align-items:flex-start"><div class="panel"><h3>Calendario</h3><div class="calw">${CAL.map((c,i)=>{const x=CAR.res[i],cur=i===CAR.week;
+    const t=x?(x.user<0?'No jugado':STAGEN[x.user]+(x.gain?` · +${x.gain}`:''))+(x.cat==='FIP'?' (FIP)':''):(cur?(CAR.ev?'En juego':'Siguiente'):'');
+    return `<div class="cal${cur?' cur':''}${x?' done':''}"><span class="cc">${c.c}</span><span class="cn">${c.n}</span><span class="cr">${t}</span></div>`;}).join('')}</div></div>`;
+  const top=rk.slice(0,10),around=r>10?rk.slice(Math.max(10,r-3),r+2):[];
+  h+=`<div class="panel"><h3>Ranking</h3><div class="rkw"><div class="rkh"><span>#</span><span>Jugador</span><span>Puntos</span></div>${[...top,...(around.length?['…']:[]),...around].map(k=>k==='…'?'<div class="rkr"><span></span><span>…</span><span></span></div>':`<div class="rkr${k===CAR.me?' you':''}"><span>${rk.indexOf(k)+1}</span><span>${esc(CHARS[k].name)}${k===mate?' 🤝':''}</span><span>${carPts(k)}</span></div>`).join('')}</div></div></div>`;
+  h+=`<button class="link" data-act="quit" id="bCarQuit">Abandonar carrera</button>`;
+  $('#carHub').innerHTML=h;
+}
+$('#carHub').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!CAR)return;const a=t.dataset.act,k=t.dataset.k;
+  if(a==='plus'){const s=t.dataset.st;if(CAR.sp>0&&CAR.base[s]<CAR_MAX-1e-6){CAR.sp--;CAR.base[s]=r2(Math.min(CAR_MAX,CAR.base[s]+CAR_STEP));carApply();saveCar();}}
+  else if(a==='mates')carMatesOpen=!carMatesOpen;
+  else if(a==='pick'||a==='acc'){carSetMate(k);carMatesOpen=false;}
+  else if(a==='dec'){CAR.offers=CAR.offers.filter(o=>o.k!==k);saveCar();}
+  else if(a==='spon'){const sl=t.dataset.slot,id=t.dataset.id||null,sp=id?sponBy(sl,id):null;if(id&&!(sp&&(sp.r>=999||CAR.best<=sp.r)))return;CAR.spon[sl]=id;carApply();saveCar();}
+  else if(a==='look'){openEditor(null,{car:true});return;}
+  else if(a==='menu'){showScreen('menu');return;}
+  else if(a==='play'){audioInit();if(CAR.ev)showBracket('car');else carNext();return;}
+  else if(a==='quit'){if(t.dataset.ok){carUnregister();CAR=null;saveCar();carMatesOpen=false;}else{t.dataset.ok='1';t.textContent='¿Seguro? Se borra la carrera. Pulsa otra vez';return;}}
+  buildCar();});
+$('#bCarLook').onclick=()=>openEditor(null,{car:true});
+$('#bCarStart').onclick=()=>{audioInit();store.set('ks',KS);newCar();buildCar();};
+if(CAR){try{if(!CAR.chars||!CAR.hist||!CAR.look)throw 0;carRegister();}catch(e){CAR=null;}}
 $('#bTourStart').onclick=()=>{audioInit();store.set('ts',TS);newTour();};
 $('#bTourCont').onclick=()=>{audioInit();showBracket('tour');};
 $('#bCircStart').onclick=()=>{audioInit();store.set('cs',CS);newCirc();};
 $('#bTourNext').onclick=()=>{afterUserMatch();};
+
+/* ============ GUARDADO EN LA NUBE (cuenta de Google) ============ */
+const SAVE_KEYS=['mods','custom','tour2','circ','car','card','ks','ts','cs','set','tr','on','opt','best','snd'];
+const GSVG='<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+const lsG=k=>{try{return localStorage.getItem(k);}catch(e){return null;}},lsS=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,String(v));}catch(e){}};
+function saveBlob(){const o={};for(const k of SAVE_KEYS){const v=lsG('padel_'+k);if(v!=null)o[k]=v;}return o;}
+function applyBlob(o){for(const k of SAVE_KEYS)lsS('padel_'+k,o[k]!=null?o[k]:null);}
+function blobSummary(o){const out=[];const J=k=>{try{return o[k]?JSON.parse(o[k]):null;}catch(e){return null;}};
+  const c=J('car');if(c&&c.look)out.push(`carrera de <b>${esc(c.look.name||'tu jugador')}</b> (temporada ${c.season||1}, mejor puesto #${c.best||'-'})`);
+  const ci=J('circ');if(ci&&ci.pairs)out.push('un circuito en curso');const t=J('tour2');if(t&&t.ev&&t.ev.champ==null)out.push('un torneo en curso');
+  const cu=J('custom');if(Array.isArray(cu)&&cu.length)out.push(cu.length+(cu.length>1?' jugadores creados':' jugador creado'));
+  return out.length?out.join(', '):'sin partidas guardadas';}
+const hasProgress=o=>/carrera|circuito|torneo|creado/.test(blobSummary(o));
+let FB_LOADING=null;
+function loadScript(src){return new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>rej({code:'no_lib'});document.head.appendChild(e);});}
+function loadFirebase(){if(window.firebase&&window.firebase.firestore)return Promise.resolve();if(FB_LOADING)return FB_LOADING;const b='https://www.gstatic.com/firebasejs/10.14.1/';
+  FB_LOADING=loadScript(b+'firebase-app-compat.js').then(()=>Promise.all([loadScript(b+'firebase-auth-compat.js'),loadScript(b+'firebase-firestore-compat.js')])).catch(e=>{FB_LOADING=null;throw e;});return FB_LOADING;}
+function cloudErr(e){const c=(e&&e.code)||'';return ({no_lib:'No se pudo cargar el inicio de sesión de Google. Revisa tu conexión.',
+  'auth/unauthorized-domain':'Esta web aún no está autorizada en Firebase (Authentication → Settings → Authorized domains).',
+  'auth/popup-closed-by-user':'Has cerrado la ventana de Google antes de terminar.','auth/cancelled-popup-request':'Has cerrado la ventana de Google antes de terminar.',
+  'auth/network-request-failed':'Sin conexión a internet.','permission-denied':'La nube ha rechazado el guardado (revisa las reglas de Firestore).',
+  'auth/operation-not-allowed':'El inicio de sesión con Google no está activado en Firebase (Authentication → Sign-in method → Google).'})[c]||('No se pudo conectar'+(c?' ('+c+')':'')+'.');}
+async function cloudInit(){
+  if(CLOUD.auth)return;await loadFirebase();
+  if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+  CLOUD.auth=firebase.auth();CLOUD.db=firebase.firestore();
+  CLOUD.auth.getRedirectResult().catch(e=>{CLOUD.state='err';CLOUD.err=cloudErr(e);cloudUI();});
+  CLOUD.auth.onAuthStateChanged(u=>{CLOUD.user=u;if(u){lsS('padel__cloud','1');cloudSync();}else{CLOUD.state='off';cloudUI();}});
+}
+async function cloudLogin(){
+  audioInit();
+  if(!FIREBASE_CONFIG){CLOUD.state='err';CLOUD.err='El guardado con Google todavía no está activado en esta web.';cloudUI();return;}
+  CLOUD.state='busy';CLOUD.err='';cloudUI();
+  try{await cloudInit();const prov=new firebase.auth.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});
+    try{await CLOUD.auth.signInWithPopup(prov);}
+    catch(e){if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'))await CLOUD.auth.signInWithRedirect(prov);else throw e;}
+  }catch(e){CLOUD.state='err';CLOUD.err=cloudErr(e);cloudUI();}
+}
+function cloudLogout(){lsS('padel__cloud',null);try{CLOUD.auth&&CLOUD.auth.signOut();}catch(e){}CLOUD.user=null;CLOUD.state='off';cloudUI();}
+const cloudRef=()=>CLOUD.db.collection('saves').doc(CLOUD.user.uid);
+async function cloudSync(){
+  const u=CLOUD.user;if(!u)return;CLOUD.state='sync';cloudUI();
+  try{
+    const snap=await cloudRef().get(),lt=+(lsG('padel__ts')||0),synced=+(lsG('padel__synced')||0),same=lsG('padel__uid')===u.uid;
+    if(!snap.exists){await cloudPush();return;}
+    const d=snap.data()||{},ct=+d.t||0;let blob={};try{blob=JSON.parse(d.data||'{}');}catch(e){}
+    if(!same){const local=saveBlob();
+      if(hasProgress(local)&&hasProgress(blob)&&JSON.stringify(local)!==JSON.stringify(blob)){CLOUD.ask={blob,ct};
+        $('#caN').innerHTML=`En tu cuenta tienes: ${blobSummary(blob)} (guardado el ${new Date(ct).toLocaleString('es-ES')}).<br><br>En este dispositivo tienes: ${blobSummary(local)}.<br><br>¿Con cuál sigues? La otra se sustituye.`;
+        CLOUD.state='ok';cloudUI();if(!S)showScreen('cloudask');return;}
+      if(hasProgress(blob)||!hasProgress(local)){cloudLoad(blob,ct);return;}
+      await cloudPush();return;}
+    if(ct>synced&&ct>=lt){cloudLoad(blob,ct);return;}
+    if(lt>synced||lt>ct){await cloudPush();return;}
+    CLOUD.state='ok';cloudUI();
+  }catch(e){CLOUD.state='err';CLOUD.err=cloudErr(e);cloudUI();}
+}
+function cloudLoad(blob,ct){applyBlob(blob);lsS('padel__ts',ct);lsS('padel__synced',ct);lsS('padel__uid',CLOUD.user.uid);
+  if(S){CLOUD.state='ok';cloudUI();return;}location.reload();}
+async function cloudPush(){
+  CLOUD.timer=null;if(!CLOUD.user||!CLOUD.db)return;const t=+(lsG('padel__ts')||0)||Date.now();CLOUD.state='sync';cloudUI();
+  try{await cloudRef().set({t,v:1,data:JSON.stringify(saveBlob()),who:(CLOUD.user.displayName||'').slice(0,40)});
+    lsS('padel__synced',t);lsS('padel__uid',CLOUD.user.uid);lsS('padel__ts',t);CLOUD.state='ok';}
+  catch(e){CLOUD.state='err';CLOUD.err=cloudErr(e);}
+  cloudUI();
+}
+function cloudDirty(){if(!CLOUD.user||CLOUD.ask)return;clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,2500);}
+function cloudUI(){
+  const el=$('#cloudBar');if(!el)return;const u=CLOUD.user;let h='';
+  if(u){const nm=esc((u.displayName||u.email||'Tu cuenta').split(' ')[0]),av=u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span class="av">${nm.charAt(0)}</span>`;
+    h=`<span class="who">${av}${nm}</span><span class="${CLOUD.state==='err'?'bad':'ok'}">${CLOUD.state==='sync'?'☁️ Guardando…':CLOUD.state==='err'?esc(CLOUD.err):'☁️ Partida guardada en tu cuenta'}</span><button class="link" id="bLogout">Cerrar sesión</button>`;}
+  else if(CLOUD.state==='busy')h='<span>Conectando con Google…</span>';
+  else{h=`<button class="gbtn" id="bLogin">${GSVG}Iniciar sesión con Google</button><span>para guardar tu partida y seguirla en cualquier dispositivo</span>`;if(CLOUD.state==='err')h+=`<div class="bad" style="width:100%">${esc(CLOUD.err)}</div>`;}
+  el.innerHTML=h;const bi=$('#bLogin'),bo=$('#bLogout');if(bi)bi.onclick=cloudLogin;if(bo)bo.onclick=cloudLogout;
+}
+$('#caLoad').onclick=()=>{const a=CLOUD.ask;CLOUD.ask=null;if(a)cloudLoad(a.blob,a.ct);};
+$('#caKeep').onclick=()=>{CLOUD.ask=null;lsS('padel__ts',Date.now());cloudPush();showScreen('menu');};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&CLOUD.user&&CLOUD.timer){clearTimeout(CLOUD.timer);CLOUD.timer=null;cloudPush();}});
+cloudUI();
+if(FIREBASE_CONFIG&&lsG('padel__cloud'))cloudInit().catch(e=>{CLOUD.state='err';CLOUD.err=cloudErr(e);cloudUI();});
 
 /* ============ BUCLE ============ */
 let last=performance.now();
@@ -1932,7 +2260,7 @@ function frame(now){
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);
-window.__padel={newMatch,get S(){return S;}};
+window.__padel={newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>
