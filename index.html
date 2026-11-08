@@ -1734,6 +1734,7 @@ addEventListener('orientationchange',()=>setTimeout(fsCheck,250));addEventListen
 const fsTap=()=>{if(FSA.arm&&isTouch&&isLand()&&!fsEl()&&!FSA.manual)tryFullscreen();if(fsEl())FSA.arm=false;};
 addEventListener('touchend',fsTap,{passive:true});addEventListener('pointerup',fsTap,{passive:true});addEventListener('click',fsTap,{passive:true});
 setTimeout(fsCheck,300);
+if('serviceWorker' in navigator&&location.protocol==='https:'&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{audioInit();const g=b.dataset.go;if(g==='setup')buildSetup();if(g==='tour')buildTour();if(g==='circ')buildCirc();if(g==='car')buildCar();if(g==='roster')buildRoster();if(g==='train')buildTrain();if(g==='online')buildOnline();showScreen(g);});
 $('#bPlay').onclick=()=>{audioInit();store.set('set',SET);if(isTouch)tryFullscreen();
   newMatch({mode:'bots',chars:[SET.me,SET.mate,SET.riv[0],SET.riv[1]],ctrls:['human','ai','ai','ai'],me:0,diff:SET.diff,len:SET.len,golden:SET.golden,outPlay:SET.out!==false});};

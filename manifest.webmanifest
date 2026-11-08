@@ -1,2 +1,2 @@
-{"name":"Pádel La Orden","short_name":"Pádel","start_url":"./","scope":"./","display":"fullscreen","orientation":"landscape","background_color":"#070d1a","theme_color":"#070d1a",
-"icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
+{"id":"./","name":"Pádel La Orden","short_name":"Pádel","description":"Juego de pádel de La Orden del Friki","start_url":"./index.html","scope":"./","display":"standalone","display_override":["fullscreen","standalone"],"orientation":"landscape","background_color":"#070d1a","theme_color":"#070d1a",
+"icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
