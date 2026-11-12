@@ -2332,20 +2332,22 @@ function buildCar(){
   h+=`<button class="link" data-act="quit" id="bCarQuit">Abandonar carrera</button>`;
   $('#carHub').innerHTML=h;
 }
-$('#carHub').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!CAR)return;const a=t.dataset.act,k=t.dataset.k;
+// acciones de la carrera (pantalla de carrera y tiendas del barrio). Devuelve false si no hay que repintar la pantalla de carrera
+function carAct(a,t){if(!CAR)return false;const k=t.dataset.k;
   if(a==='plus'){const s=t.dataset.st;if(CAR.sp>0&&CAR.base[s]<CAR_MAX-1e-6){CAR.sp--;CAR.base[s]=r2(Math.min(CAR_MAX,CAR.base[s]+CAR_STEP));carApply();saveCar();}}
   else if(a==='mates')carMatesOpen=!carMatesOpen;
   else if(a==='pick'||a==='acc'){carSetMate(k);carMatesOpen=false;}
   else if(a==='dec'){CAR.offers=CAR.offers.filter(o=>o.k!==k);saveCar();}
-  else if(a==='spon'){const sl=t.dataset.slot,id=t.dataset.id||null,sp=id?sponBy(sl,id):null;if(id&&!(sp&&(sp.r>=999||CAR.best<=sp.r)))return;CAR.spon[sl]=id;carApply();saveCar();}
+  else if(a==='spon'){const sl=t.dataset.slot,id=t.dataset.id||null,sp=id?sponBy(sl,id):null;if(id&&!(sp&&(sp.r>=999||CAR.best<=sp.r)))return false;CAR.spon[sl]=id;carApply();saveCar();}
   else if(a==='buy'){const r=rkBy(t.dataset.id);if(!CAR.owned.includes(r.id)&&CAR.money>=r.p){CAR.money-=r.p;CAR.owned.push(r.id);CAR.rk=r.id;carNews(`🛒 Te compras la <b>${esc(r.n)}</b> por ${eur(r.p)}.`);carApply();saveCar();}}
   else if(a==='equip'){if(CAR.owned.includes(t.dataset.id)){CAR.rk=t.dataset.id;carApply();saveCar();}}
   else if(a==='coach'){const pr=coachPrice();if(CAR.money>=pr){CAR.money-=pr;CAR.coach=(CAR.coach||0)+1;CAR.sp++;carNews(`🏋️ Sesión con el entrenador (${eur(pr)}): +1 punto de mejora.`);saveCar();}}
-  else if(a==='look'){openEditor(null,{car:true});return;}
-  else if(a==='menu'){showScreen('menu');return;}
-  else if(a==='play'){audioInit();if(CAR.ev)showBracket('car');else carNext();return;}
-  else if(a==='quit'){if(t.dataset.ok){carUnregister();CAR=null;saveCar();carMatesOpen=false;}else{t.dataset.ok='1';t.textContent='¿Seguro? Se borra la carrera. Pulsa otra vez';return;}}
-  buildCar();});
+  else if(a==='look'){openEditor(null,{car:true});return false;}
+  else if(a==='menu'){showScreen('menu');return false;}
+  else if(a==='play'){audioInit();if(CAR.ev)showBracket('car');else carNext();return false;}
+  else if(a==='quit'){if(t.dataset.ok){carUnregister();CAR=null;saveCar();carMatesOpen=false;}else{t.dataset.ok='1';t.textContent='¿Seguro? Se borra la carrera. Pulsa otra vez';return false;}}
+  return true;}
+$('#carHub').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!CAR)return;if(carAct(t.dataset.act,t)!==false)buildCar();});
 $('#bCarLook').onclick=()=>openEditor(null,{car:true});
 $('#bCarStart').onclick=()=>{audioInit();store.set('ks',KS);newCar();buildCar();};
 if(CAR){try{if(!CAR.chars||!CAR.hist||!CAR.look)throw 0;carRegister();}catch(e){CAR=null;}}
@@ -3246,7 +3248,7 @@ function frame(now){
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
-window.__padel={G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
+window.__padel={carAct,newCar,G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>
