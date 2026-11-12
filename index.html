@@ -3183,6 +3183,103 @@ function coaches3(){
     // entre punto y punto se inclinan un poco hacia la pista
     o.lean=0.18+Math.sin(now/2300+P.seed)*0.05;o.twist=Math.sin(now/3100+P.seed)*0.12;applyPoseHum(P,o,now,dt);});
 }
+/* ============ BARRIO ============ */
+// Barrio de 60 × 40 m centrado en el origen (x a la derecha, z hacia la cámara). Dos calles largas (z=±5,5),
+// una plaza abierta en el centro y la avenida de la estación al este. Cada edificio: caja, puerta y color.
+const BAR_BLDS=[
+  {id:'casa',n:'Tu casa',box:[-27,-17,-15,-7],door:[-21,-6.7],col:'#e9c46a'},
+  {id:'club',n:'Club',box:[-9,-18,9,-7],door:[0,-6.7],col:'#2a9d8f'},
+  {id:'inmo',n:'Inmobiliaria',box:[15,-16,26,-7],door:[20.5,-6.7],col:'#8ecae6'},
+  {id:'ropa',n:'Ropa',box:[-27,7,-15,16],door:[-21,6.7],col:'#f4a261'},
+  {id:'padel',n:'La Orden del Friki – Pádel',box:[-8,7,8,15],door:[0,6.7],col:'#3a1d5c'},
+  {id:'muebles',n:'Muebles',box:[15,7,26,16],door:[20.5,6.7],col:'#c08552'},
+  {id:'estacion',n:'Estación',box:[24.5,-3.5,29.5,3.5],door:[24.2,0],col:'#adb5bd'}];
+const BAR={on:false,scene:null,cam:null,P:null,path:[],pos:{x:0,z:0},dest:null,face:0,gait:0,drag:null,camOff:{x:0,z:0}};
+// red de puntos de paso por calles y plaza (se calcula una vez; no depende del 3D)
+const BAR_NET=(()=>{const nodes=[],edges=[],id={};const add=(k,x,z)=>{id[k]=nodes.length;nodes.push({x,z});};
+  const xs=[-21,-12,0,12,20.5,24];for(const x of xs){add('N'+x,x,-5.5);add('S'+x,x,5.5);}for(const x of [-12,0,12,24])add('M'+x,x,0);
+  const link=(a,b)=>edges.push([id[a],id[b]]);
+  for(let i=1;i<xs.length;i++){link('N'+xs[i-1],'N'+xs[i]);link('S'+xs[i-1],'S'+xs[i]);}
+  for(const x of [-12,0,12,24]){link('N'+x,'M'+x);link('M'+x,'S'+x);}
+  link('M-12','M0');link('M0','M12');link('M12','M24');
+  for(const b of BAR_BLDS){add('D'+b.id,b.door[0],b.door[1]);const near=b.id==='estacion'?'M24':(b.door[1]<0?'N':'S')+b.door[0];link('D'+b.id,near);}
+  return {nodes,edges};})();
+// ruta más corta (Dijkstra) por la red; si el destino cae dentro de un edificio, se va a su puerta
+function barrioPath(from,to){
+  const N=BAR_NET.nodes,E=BAR_NET.edges,d=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+  for(const b of BAR_BLDS)if(to.x>b.box[0]&&to.x<b.box[2]&&to.z>b.box[1]&&to.z<b.box[3]){to={x:b.door[0],z:b.door[1]};break;}
+  const near=p=>{let bi=0,bd=1e9;N.forEach((n,i)=>{const v=d(n,p);if(v<bd){bd=v;bi=i;}});return bi;};
+  const s=near(from),t=near(to),dist=N.map(()=>1e9),prev=N.map(()=>-1),done=N.map(()=>false);dist[s]=0;
+  for(;;){let u=-1;for(let i=0;i<N.length;i++)if(!done[i]&&(u<0||dist[i]<dist[u]))u=i;if(u<0||dist[u]>=1e9)break;done[u]=true;if(u===t)break;
+    for(const [a,b] of E){const v=a===u?b:b===u?a:-1;if(v<0||done[v])continue;const nd=dist[u]+d(N[u],N[v]);if(nd<dist[v]){dist[v]=nd;prev[v]=u;}}}
+  const nodes=[];for(let v=t;v>=0;v=prev[v])nodes.unshift({x:N[v].x,z:N[v].z});
+  const out=[{x:from.x,z:from.z},...nodes];if(d(out[out.length-1],to)>0.05)out.push({x:to.x,z:to.z});
+  return out;
+}
+function signTex(txt,bg,fg,w,h){return cTex(w||512,h||128,(g,W2,H2)=>{g.fillStyle=bg;g.fillRect(0,0,W2,H2);g.fillStyle=fg;g.font=`${Math.round(H2*0.62)}px "Bebas Neue",Impact,sans-serif`;g.textAlign='center';g.textBaseline='middle';
+  const tw=g.measureText(txt).width;g.save();g.translate(W2/2,H2/2+2);g.scale(Math.min(1,W2*0.9/tw),1);g.fillText(txt,0,0);g.restore();});}
+function buildBarrio3(){
+  const T=THREE,sc=new T.Scene();sc.background=new T.Color(0x9fd3ff);sc.fog=new T.Fog(0x9fd3ff,55,110);
+  sc.add(new T.HemisphereLight(0xffffff,0x6b8f5a,1.1));const sun=new T.DirectionalLight(0xfff1d6,2.4);sun.position.set(-18,30,14);sun.target.position.set(0,0,0);sc.add(sun);sc.add(sun.target);
+  sun.castShadow=true;const sm=isTouch?1024:2048;sun.shadow.mapSize.set(sm,sm);Object.assign(sun.shadow.camera,{left:-36,right:36,top:26,bottom:-26,near:5,far:80});sun.shadow.bias=-0.0005;
+  const add=(m,cast,rec)=>{m.castShadow=!!cast;m.receiveShadow=rec!==false;sc.add(m);return m;};
+  const box=(x0,z0,x1,z1,y0,y1,mat,cast)=>{const m=new T.Mesh(new T.BoxGeometry(x1-x0,y1-y0,z1-z0),mat);m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);return add(m,cast);};
+  // suelo: césped, calles, plaza y avenida
+  box(-34,-24,34,24,-0.2,0,MS(0x7fb069,{roughness:1}));
+  const pave=MS(0xd9d4c7,{roughness:0.95}),plaza=MS(0xe8dcc0,{roughness:0.9});
+  box(-29,-7,29,-4,0,0.02,pave);box(-29,4,29,7,0,0.02,pave);box(-13.5,-4,13.5,4,0,0.025,plaza);box(13.5,-1.6,24.4,1.6,0,0.02,pave);
+  for(const x of [-12,0,12])box(x-1.3,-7,x+1.3,7,0,0.022,pave);
+  // fuente
+  {const st=MS(0xcfc6b4,{roughness:0.8});const b1=new T.Mesh(new T.CylinderGeometry(2.6,2.8,0.55,32),st);b1.position.y=0.27;add(b1,true);
+    const w=new T.Mesh(new T.CylinderGeometry(2.35,2.35,0.1,32),MS(0x4aa3df,{roughness:0.15,metalness:0.2,emissive:0x0b3550}));w.position.y=0.5;add(w,false);
+    const c=new T.Mesh(new T.CylinderGeometry(0.35,0.5,1.6,16),st);c.position.y=1.1;add(c,true);const t=new T.Mesh(new T.CylinderGeometry(0.9,0.9,0.18,24),st);t.position.y=1.9;add(t,true);}
+  // edificios
+  for(const b of BAR_BLDS){const [x0,z0,x1,z1]=b.box,col=new T.Color(b.col),front=b.door[1]<z0?-1:b.door[1]>z1?1:0,side=b.id==='estacion';
+    const h=b.id==='club'?4:b.id==='estacion'?4.5:z0>0?3.2:b.id==='inmo'?7:6;
+    if(b.id==='club'){ // pabellón pequeño + pista exterior visible
+      box(x0,z0,x1,z0+4,0,h,MS(col,{roughness:0.8}),true);box(x0-0.2,z0-0.2,x1+0.2,z0+4.2,h,h+0.3,MS(0xf4f4f4),true);
+      const court=new T.Mesh(new T.PlaneGeometry(10,6),new T.MeshStandardMaterial({map:cTex(256,154,(g,w,hh)=>{g.fillStyle='#1d5cc9';g.fillRect(0,0,w,hh);g.strokeStyle='#fff';g.lineWidth=3;g.strokeRect(4,4,w-8,hh-8);g.beginPath();g.moveTo(w/2,0);g.lineTo(w/2,hh);g.moveTo(w*0.2,hh/2);g.lineTo(w*0.8,hh/2);g.stroke();}),roughness:0.9}));
+      court.rotation.x=-Math.PI/2;court.position.set(0,0.03,z1-4.3);add(court,false);
+      const glass=new T.MeshStandardMaterial({color:0xcfe8ff,transparent:true,opacity:0.25,roughness:0.05,side:T.DoubleSide});
+      for(const [px,pz,w,rot] of [[-5,z1-4.3,6,Math.PI/2],[5,z1-4.3,6,Math.PI/2],[0,z1-7.3,10,0]]){const g2=new T.Mesh(new T.PlaneGeometry(w,1.6),glass);g2.position.set(px,0.8,pz);g2.rotation.y=rot;sc.add(g2);}
+      const net=new T.Mesh(new T.BoxGeometry(0.05,0.45,6),MS(0x222222));net.position.set(0,0.23,z1-4.3);sc.add(net);}
+    else if(side){box(x0,z0,x1,z1,0,h,MS(col,{roughness:0.6,metalness:0.2}),true);box(x0-1.4,z0-0.5,x0,z1+0.5,3.2,3.4,MS(0x495057),true);
+      for(const zz of [z0,z1])box(x0-1.4,zz-0.1,x0-1.2,zz+0.1,0,3.2,MS(0x495057));}
+    else{box(x0,z0,x1,z1,0,h,MS(col,{roughness:0.85}),true);box(x0-0.25,z0-0.25,x1+0.25,z1+0.25,h,h+0.25,MS(b.id==='padel'?0x6a3fb5:col.clone().multiplyScalar(0.7)),true);
+      // ventanas en la fachada
+      const fz=front<0?z0-0.02:z1+0.02,winM=MS(0x2b4a6b,{roughness:0.2,metalness:0.4,emissive:0x0a1a2a});
+      for(let x=x0+1.6;x<x1-1;x+=2.4){if(Math.abs(x-b.door[0])<1.4)continue;for(let y=1.4;y<h-0.8;y+=2){const w=new T.Mesh(new T.PlaneGeometry(1.2,1.1),winM);w.position.set(x,y,fz);if(front<0)w.rotation.y=Math.PI;sc.add(w);}}}
+    // puerta y rótulo
+    const dz=side?0:(front<0?z0-0.03:z1+0.03),dx=side?x0-0.03:b.door[0];
+    const door=new T.Mesh(new T.PlaneGeometry(1.4,2.3),MS(0x3d2b1f,{roughness:0.6}));door.position.set(dx,1.15,side?b.door[1]:dz);door.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);sc.add(door);
+    const txt=b.id==='padel'?'LA ORDEN DEL FRIKI · PÁDEL':b.id==='estacion'?'ESTACIÓN · TORNEOS':b.n.toUpperCase();
+    const neon=b.id==='padel';const sg=new T.Mesh(new T.PlaneGeometry(side?4:Math.min(9,x1-x0-1),side?0.9:1.1),new T.MeshStandardMaterial({map:signTex(txt,neon?'#140a24':'#ffffff',neon?'#d8ff3e':'#1b263b'),emissive:neon?0xffffff:0x000000,emissiveMap:neon?signTex(txt,'#140a24','#d8ff3e'):null,emissiveIntensity:neon?0.8:0,roughness:0.6}));
+    sg.position.set(side?x0-1.45:b.door[0],side?3.9:2.9,side?0:(front<0?z0-0.06:z1+0.06));sg.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);sc.add(sg);
+    if(b.id==='padel'){ // escaparate friki: cartas y figuras
+      const sw=new T.Mesh(new T.PlaneGeometry(4.2,1.5),new T.MeshStandardMaterial({map:cTex(256,96,(g,w,hh)=>{g.fillStyle='#0d0718';g.fillRect(0,0,w,hh);const cs=['#e63946','#f4d03f','#2ec4b6','#ffffff','#6a3fb5','#d8ff3e'];for(let i=0;i<9;i++){g.fillStyle=cs[i%cs.length];g.fillRect(10+i*27,22+(i%2)*10,20,30);}g.fillStyle='#d8ff3e';g.fillRect(20,80,w-40,4);}),emissive:0xffffff,emissiveIntensity:0.25,emissiveMap:null}));
+      sw.position.set(-3.6,1.6,z0-0.04);sw.rotation.y=Math.PI;sc.add(sw);}
+    {const rw=side?4.4:Math.min(8,x1-x0-1.5),rt=new T.Mesh(new T.PlaneGeometry(rw,rw*0.22),new T.MeshBasicMaterial({map:signTex(txt,neon?'#140a24':'#ffffff',neon?'#d8ff3e':'#1b263b'),side:T.DoubleSide}));
+      const top=b.id==='club'?h+0.3:h+0.25;rt.position.set((x0+x1)/2,top+rw*0.13,b.id==='club'?z0+2:(z0+z1)/2);rt.rotation.x=-0.55;sc.add(rt);
+      const post=new T.Mesh(new T.BoxGeometry(0.12,rw*0.2,0.12),MS(0x333333));post.position.set((x0+x1)/2,top+rw*0.06,rt.position.z-0.2);sc.add(post);}
+    b.sign=sg;}
+  // árboles (instanciados), bancos y farolas
+  const trunks=[],spots=[];for(let x=-28;x<=28;x+=5.5)for(const z of [-21,21])spots.push([x+(Math.random()-0.5),z+(Math.random()-0.5)]);
+  for(const [x,z] of [[-10,-2.6],[10,-2.6],[-10,2.6],[10,2.6],[-31,0],[-31,-10],[-31,10],[31,10],[31,-10],[17,0.0]])spots.push([x,z]);
+  const tg=new T.CylinderGeometry(0.15,0.2,1.6,8),lg=new T.IcosahedronGeometry(1.2,1),tr=new T.InstancedMesh(tg,MS(0x6b4f2a),spots.length),lv=new T.InstancedMesh(lg,MS(0x3f8f3f,{roughness:0.9}),spots.length),m4b=new T.Matrix4();
+  spots.forEach(([x,z],i)=>{const s=0.8+Math.random()*0.5;m4b.compose(new T.Vector3(x,0.8*s,z),new T.Quaternion(),new T.Vector3(s,s,s));tr.setMatrixAt(i,m4b);m4b.compose(new T.Vector3(x,2.2*s,z),new T.Quaternion().setFromEuler(new T.Euler(0,Math.random()*3,0)),new T.Vector3(s,s*1.1,s));lv.setMatrixAt(i,m4b);});
+  tr.castShadow=lv.castShadow=true;sc.add(tr);sc.add(lv);
+  const benchM=MS(0x8d5a32),ironM=MS(0x2b2d42,{metalness:0.5,roughness:0.5});
+  for(const [x,z,r] of [[-6,-3.2,0],[6,-3.2,0],[-6,3.2,Math.PI],[6,3.2,Math.PI]]){const g=new T.Group();const s=new T.Mesh(new T.BoxGeometry(1.8,0.08,0.5),benchM);s.position.y=0.45;g.add(s);const bk=new T.Mesh(new T.BoxGeometry(1.8,0.5,0.06),benchM);bk.position.set(0,0.72,-0.22);g.add(bk);
+    for(const lx of [-0.8,0.8]){const l=new T.Mesh(new T.BoxGeometry(0.06,0.45,0.45),ironM);l.position.set(lx,0.22,0);g.add(l);}g.position.set(x,0,z);g.rotation.y=r;g.traverse(o=>{if(o.isMesh)o.castShadow=true;});sc.add(g);}
+  for(let x=-24;x<=24;x+=8)for(const z of [-7.4,7.4]){const p=new T.Mesh(new T.CylinderGeometry(0.06,0.08,3.6,8),ironM);p.position.set(x,1.8,z);p.castShadow=true;sc.add(p);const l=new T.Mesh(new T.SphereGeometry(0.22,12,8),MS(0xfff3c4,{emissive:0xffe9a0,emissiveIntensity:0.6}));l.position.set(x,3.65,z);sc.add(l);}
+  return sc;
+}
+function disposeBarrio3(){
+  if(BAR.P){try{disposePlayer3(BAR.P);}catch(e){}BAR.P=null;}
+  if(BAR.scene){BAR.scene.traverse(o=>{if(o.geometry&&!Object.values(LATHE).includes(o.geometry))o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{for(const k of ['map','emissiveMap'])if(m[k])m[k].dispose();m.dispose();});}});}
+  BAR.scene=null;
+}
+
 /* ---------- cámara de televisión detrás de tu cristal ---------- */
 function fit3D(sway){
   const cam=G3.cam,asp=CW/Math.max(1,CH),zn=VIEW.zn||0,zs=VIEW.zs||0,back=5.4,h=6.7;
@@ -3248,7 +3345,7 @@ function frame(now){
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
-window.__padel={carAct,newCar,G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
+window.__padel={carAct,newCar,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>
