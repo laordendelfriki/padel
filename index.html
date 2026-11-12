@@ -3068,9 +3068,9 @@ function mkHuman3(C,scn){
   const hand=C.lefty?'L':'R',H=b=>bones[bi[b]],BHn=b=>BH[bi[b]];if(C.noRk){P.noRk=true;}
   const hd0=BHn('f3-1.'+hand).clone().sub(BHn('hand.'+hand)).normalize(),ac0=BHn('f2-1.'+hand).clone().sub(BHn('f5-1.'+hand)).normalize();
   const palm0=new T.Vector3().crossVectors(hd0,ac0).normalize();if(palm0.x*BHn('hand.'+hand).x>0)palm0.negate();
-  const fa0=BHn('hand.'+hand).clone().sub(BHn('lowerarm.'+hand)).normalize(),th0=ac0.clone().addScaledVector(fa0,-ac0.dot(fa0)).normalize(),d0=fa0.clone().multiplyScalar(0.8).addScaledVector(th0,0.6).normalize(),n0=palm0.clone().addScaledVector(d0,-palm0.dot(d0)).normalize(),w0=new T.Vector3().crossVectors(d0,n0);
+  const fa0=BHn('hand.'+hand).clone().sub(BHn('lowerarm.'+hand)).normalize(),th0=ac0.clone().addScaledVector(fa0,-ac0.dot(fa0)).normalize(),d0=fa0.clone().multiplyScalar(0.47).addScaledVector(th0,0.88).normalize(),n0=palm0.clone().addScaledVector(d0,-palm0.dot(d0)).normalize(),w0=new T.Vector3().crossVectors(d0,n0);
   const M0=new T.Matrix4().makeBasis(w0,d0,n0);if(!C.noRk){const rk=mkRacket3(C,mat);rk.quaternion.setFromRotationMatrix(M0);
-  rk.position.copy(hd0).multiplyScalar(0.06).addScaledVector(palm0,0.028).addScaledVector(d0,-0.01);P.g.add(rk);P.rk=rk;}
+  rk.position.copy(hd0).multiplyScalar(0.06).addScaledVector(palm0,0.028).addScaledVector(d0,-0.01);H('hand.'+hand).add(rk);P.rk=rk;}
   // muñequera y reloj
   const band=(side,col,w)=>{const a=BHn('lowerarm.'+side),b=BHn('hand.'+side),dir=b.clone().sub(a).normalize(),cg=new T.CylinderGeometry(0.036,0.034,w,16,1,true),x=new T.Mesh(cg,mat(col,{roughness:0.85,side:T.DoubleSide}));
     x.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),dir);x.position.copy(a.clone().lerp(b,0.86).sub(a));x.castShadow=true;H('lowerarm.'+side).add(x);};
@@ -3138,9 +3138,16 @@ function applyPoseHum(P,o,now,dt){
     const j=bi['lowerarm.'+s],l0=BT[j].clone().sub(BH[j]).normalize().applyQuaternion(qU),l1=ik.t.clone().sub(ik.e).normalize();let qL=new T.Quaternion().setFromUnitVectors(l0,l1).multiply(qU);
     // mano firme alineada con el antebrazo (sin giros de muñeca); la pala sigue la trayectoria de la animación original
     let qHd;const F=R.fingers[s];
+    let qRel=new T.Quaternion();
     if(racket){const dl=hV(o.dir).applyQuaternion(qT).normalize(),wl=hV(o.wid).applyQuaternion(qT).normalize(),nl=new T.Vector3().crossVectors(wl,dl).normalize();wl.crossVectors(dl,nl);
-      R.rkT={p:ik.t.clone().addScaledVector(l1,0.085),q:new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(wl,dl,nl))};}
-    qHd=qL.clone();const qRel=new T.Quaternion();
+      // 1) el antebrazo gira sobre su eje para orientar la pala
+      const pa=new T.Vector3().setFromMatrixColumn(R.M0,1).applyQuaternion(qL),pb=dl.clone(),ax=l1;pa.addScaledVector(ax,-pa.dot(ax));pb.addScaledVector(ax,-pb.dot(ax));
+      if(pa.lengthSq()>1e-6&&pb.lengthSq()>1e-6){pa.normalize();pb.normalize();let ang=Math.acos(clamp(pa.dot(pb),-1,1));if(new T.Vector3().crossVectors(pa,pb).dot(ax)<0)ang=-ang;qL=new T.Quaternion().setFromAxisAngle(ax,clamp(ang,-1.6,1.6)).multiply(qL);}
+      // 2) la muñeca corrige lo que falte, como mucho 35º
+      const qWant=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(wl,dl,nl).multiply(R.M0.clone().transpose()));
+      qRel=qL.clone().invert().multiply(qWant);if(qRel.w<0)qRel.set(-qRel.x,-qRel.y,-qRel.z,-qRel.w);
+      const wa=2*Math.acos(clamp(qRel.w,0,1)),mx=0.6;if(wa>mx)qRel=new T.Quaternion().slerp(qRel,mx/wa);}
+    qHd=qL.clone().multiply(qRel);
     set('lowerarm.'+s,qU.clone().invert().multiply(qL));set('hand.'+s,qRel);
     // dedos: agarran la pala o quedan relajados
     for(const [bx,axis,f,kk] of F.ax){const a=racket?(f===1?[0.35,0.35,0.3][kk-1]:[1.05,1.25,0.85][kk-1]):(f===1?0.25:[0.55,0.75,0.5][kk-1]);B[bx].quaternion.setFromAxisAngle(axis,a);}
@@ -3162,8 +3169,6 @@ function applyPoseHum(P,o,now,dt){
     let qF=new T.Quaternion().setFromUnitVectors(r0,hv);const lat=new T.Vector3().crossVectors(hv,new T.Vector3(0,1,0)).normalize();qF=new T.Quaternion().setFromAxisAngle(lat,pitch).multiply(qF);
     set('foot.'+side,qSh.clone().invert().multiply(qF));set('toe.'+side,I);});
   // suavizado: evita saltos bruscos de una pose a otra (constante de tiempo ~45 ms)
-  if(R.rkT&&P.rk){const t=R.rkT;if(dt>0&&R.rkP){const a=1-Math.exp(-dt*22);R.rkP.p.lerp(t.p,a);R.rkP.q.slerp(t.q,a);}else R.rkP={p:t.p.clone(),q:t.q.clone()};
-    P.rk.position.copy(R.rkP.p);P.rk.quaternion.copy(R.rkP.q);}
   if(dt>0){const a=1-Math.exp(-dt*22);if(!R.prevQ){R.prevQ=B.map(b=>b.quaternion.clone());R.prevRoot=B[0].position.clone();}
     else{for(let i=0;i<B.length;i++){const q=R.prevQ[i];q.slerp(B[i].quaternion,a);B[i].quaternion.copy(q);}R.prevRoot.lerp(B[0].position,a);B[0].position.copy(R.prevRoot);}}
   // parpadeo y mirada
