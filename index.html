@@ -1747,7 +1747,7 @@ function portrait(cnv,key){const d=2;cnv.width=90*d;cnv.height=100*d;const g=cnv
 const PCACHE={},P3C={},P3Q=[],PH={};let P3T=0;
 // retratos realistas: se generan de uno en uno, se guardan en el móvil (no hay que esperar la próxima vez)
 // y mientras tanto se ve una silueta del color de su camiseta (no el muñeco antiguo)
-const P3V='p3v5';
+const P3V='p3v6';
 function p3sig(C){return sigOf(C)+'|'+P3V;}
 function p3load(k,sig){try{const r=JSON.parse(localStorage.getItem('padel_p3_'+k)||'null');if(r&&r.s===sig)return r.u;}catch(e){}return null;}
 function p3save(k,sig,u){try{localStorage.setItem('padel_p3_'+k,JSON.stringify({s:sig,u}));}catch(e){}}
@@ -2446,7 +2446,7 @@ function portrait3(C){
     G3.pr={sc,rt,cam:new T.PerspectiveCamera(26,w/h,0.1,30),c1,buf:new Uint8Array(w*h*16)};}
   const pr=G3.pr,P=useHum()?mkHuman3(C,pr.sc):mkPlayer3(C,pr.sc);P.blob.visible=false;
   {const po=pose3(C,{time:1.1,seed:0,hero:true});if(P.hum)applyPoseHum(P,po,1100);else applyPose3(P,po);}const s=(C.h||1.8)/1.8;P.g.scale.set(s,s,s);P.g.rotation.y=Math.PI-0.6;
-  if(P.hum){pr.cam.fov=12.5;pr.cam.position.set(0,1.5*s,4.9);pr.cam.lookAt(0,1.36*s,0);}else{pr.cam.fov=18;pr.cam.position.set(0,1.3*s,4.9);pr.cam.lookAt(0,1.07*s,0);}pr.cam.updateProjectionMatrix();
+  if(P.hum){pr.cam.fov=15.5;pr.cam.position.set(0,1.42*s,4.9);pr.cam.lookAt(0,1.24*s,0);}else{pr.cam.fov=18;pr.cam.position.set(0,1.3*s,4.9);pr.cam.lookAt(0,1.07*s,0);}pr.cam.updateProjectionMatrix();
   const prev=R.getRenderTarget(),cc=R.getClearColor(new T.Color()),ca=R.getClearAlpha();
   R.setRenderTarget(pr.rt);R.setClearColor(0x000000,0);R.clear();R.render(pr.sc,pr.cam);R.readRenderTargetPixels(pr.rt,0,0,w*2,h*2,pr.buf);R.setRenderTarget(prev);R.setClearColor(cc,ca);
   disposePlayer3(P);
@@ -2836,6 +2836,8 @@ function pose3(C,o){
     const knee=ik2(hip,ank,0.44,0.44,[s*0.3,1,0.05]),fo=s*0.18,fx=Math.sin(fo),fy=Math.cos(fo);
     legs.push({hip,knee,ank,toe:[ax+fx*0.14,af+fy*0.14,az-0.065+jz],heel:[ax-fx*0.05,af-fy*0.05,az-0.06+jz]});}
   const pz=armPose(sw,side,ez,c);
+  // foto de la ficha: de pie, relajado, con la pala colgando en la mano y el otro brazo suelto
+  if(o.hero){pz.hand=[0.25,0.1,0.88-c];pz.elb=[0.25,0.01,1.14-c];pz.dir=V3.norm([0.1,0.28,-0.95]);pz.N=[1,0,0];pz.fh=[-0.24,0.07,0.88-c];pz.fe=[-0.25,0.0,1.14-c];}
   if(!sw){ // pala delante con las dos manos; corriendo, braceo
     const pump=moving?run:0,sn=Math.sin(ph);
     pz.hand=V3.add(pz.hand,[0,-0.08*sn*pump,0.04*pump]);pz.elb=V3.add(pz.elb,[0.03*pump,-0.1*sn*pump,0]);
