@@ -2829,8 +2829,11 @@ function pose3(C,o){
     const knee=ik2(hip,ank,0.44,0.44,[s*0.3,1,0.05]),fo=s*0.18,fx=Math.sin(fo),fy=Math.cos(fo);
     legs.push({hip,knee,ank,toe:[ax+fx*0.14,af+fy*0.14,az-0.065+jz],heel:[ax-fx*0.05,af-fy*0.05,az-0.06+jz]});}
   const pz=armPose(sw,side,ez,c);
+  if(sw&&!smash&&STK[sw.type]){const ks=STK[sw.type][side>0?'f':'b'],K=smKey(ks,ez),cz=q=>[q[0],q[1],q[2]-c];
+    pz.hand=cz(K.h);pz.elb=cz(K.el);pz.dir=V3.norm(K.d);pz.fh=cz(K.fh);pz.fe=cz(K.fe);const hn=V3.norm(K.n);pz.N=side>0?hn:V3.mul(hn,-1);}
   if(SK){const cz=q=>[q[0],q[1],q[2]-c],w=smash?1:prep;
     pz.hand=V3.lerp(pz.hand,cz(SK.h),w);pz.elb=V3.lerp(pz.elb,cz(SK.el),w);pz.dir=V3.norm(V3.lerp(pz.dir,V3.norm(SK.d),w));pz.fh=V3.lerp(pz.fh,cz(SK.fh),w);pz.fe=V3.lerp(pz.fe,cz(SK.fe),w);pz.N=[0,1,0];}
+  if(!sw){pz.N=[-0.9,0.35,0];pz.hand=[0.07,0.3,1.08-c];pz.elb=[0.21,0.07,0.97-c];pz.dir=V3.norm([0.12,0.35,0.93]);pz.fh=V3.add(pz.hand,V3.mul(pz.dir,0.17));pz.fe=[-0.18,0.08,1.0-c];}
   if(!sw&&!(prep>0.5)){ // pala delante con las dos manos; corriendo, braceo
     const pump=moving?run:0,sn=Math.sin(ph);
     pz.hand=V3.add(pz.hand,[0,-0.08*sn*pump,0.04*pump]);pz.elb=V3.add(pz.elb,[0.03*pump,-0.1*sn*pump,0]);
@@ -2848,6 +2851,25 @@ const SMK={
   bandeja:[{e:0,h:[0.34,-0.07,1.63],el:[0.39,0.02,1.46],d:[0.2,-0.42,0.88],fh:[-0.2,0.3,1.92],fe:[-0.24,0.14,1.68],tw:0.35,ln:-0.12},
     {e:0.68,h:[0.27,0.36,1.84],el:[0.33,0.1,1.58],d:[0.1,0.62,0.78],fh:[-0.15,0.2,1.32],fe:[-0.25,0.06,1.4],tw:-0.25,ln:0.1},
     {e:1,h:[0.04,0.56,1.32],el:[0.2,0.28,1.36],d:[-0.32,0.86,-0.22],fh:[-0.26,0.0,1.08],fe:[-0.25,-0.02,1.27],tw:-0.5,ln:0.26}]};
+const STK={
+  normal:{f:[{e:0,h:[0.42,-0.3,1.18],el:[0.4,-0.1,1.1],d:[0.25,-0.75,0.55],n:[0.6,0.4,0],fh:[-0.3,0.35,1.2],fe:[-0.26,0.15,1.2]},
+             {e:0.5,h:[0.48,0.32,1.0],el:[0.37,0.1,1.05],d:[0.8,0.55,0.05],n:[-0.15,1,0.1],fh:[-0.22,0.12,1.05],fe:[-0.25,0.02,1.2]},
+             {e:1,h:[-0.12,0.42,1.35],el:[0.12,0.3,1.28],d:[-0.55,0.35,0.75],n:[-0.8,0.3,0.3],fh:[-0.2,0.28,1.3],fe:[-0.27,0.1,1.25]}],
+          b:[{e:0,h:[-0.3,-0.2,1.12],el:[-0.04,0.04,1.14],d:[-0.3,-0.7,0.6],n:[-0.6,0.3,0],fh:[-0.27,-0.08,1.16],fe:[-0.3,0.05,1.2]},
+             {e:0.5,h:[-0.45,0.36,1.0],el:[-0.14,0.2,1.1],d:[-0.8,0.55,0.05],n:[0.15,1,0.1],fh:[0.0,-0.2,1.05],fe:[-0.25,-0.12,1.2]},
+             {e:1,h:[0.16,0.42,1.4],el:[0.06,0.3,1.33],d:[0.55,0.3,0.75],n:[0.8,0.3,0.3],fh:[0.05,-0.18,1.0],fe:[-0.22,-0.12,1.15]}]},
+  dejada:{f:[{e:0,h:[0.42,0.05,1.12],el:[0.38,-0.05,1.1],d:[0.45,-0.2,0.85],n:[0,1,0.3],fh:[-0.25,0.3,1.15],fe:[-0.26,0.12,1.2]},
+             {e:0.75,h:[0.42,0.42,0.98],el:[0.36,0.15,1.04],d:[0.75,0.6,0.1],n:[0,0.75,0.65],fh:[-0.22,0.2,1.08],fe:[-0.25,0.06,1.2]},
+             {e:1,h:[0.34,0.5,0.96],el:[0.34,0.2,1.02],d:[0.6,0.75,0.0],n:[0,0.6,0.8],fh:[-0.22,0.18,1.06],fe:[-0.25,0.05,1.2]}],
+          b:[{e:0,h:[-0.28,0.05,1.12],el:[-0.04,0.06,1.16],d:[-0.45,-0.2,0.85],n:[0,1,0.3],fh:[-0.25,0.0,1.15],fe:[-0.3,0.05,1.2]},
+             {e:0.75,h:[-0.38,0.42,0.98],el:[-0.12,0.2,1.08],d:[-0.75,0.6,0.1],n:[0,0.75,0.65],fh:[-0.05,-0.12,1.05],fe:[-0.26,-0.06,1.2]},
+             {e:1,h:[-0.26,0.5,0.96],el:[-0.08,0.24,1.06],d:[-0.6,0.75,0.0],n:[0,0.6,0.8],fh:[-0.05,-0.12,1.05],fe:[-0.26,-0.06,1.2]}]},
+  globo:{f:[{e:0,h:[0.42,-0.25,0.86],el:[0.38,-0.08,1.02],d:[0.3,-0.6,-0.5],n:[0.4,0.3,0.6],fh:[-0.3,0.3,1.15],fe:[-0.26,0.12,1.2]},
+            {e:0.5,h:[0.46,0.34,0.86],el:[0.38,0.1,1.0],d:[0.85,0.5,-0.15],n:[0,0.6,0.8],fh:[-0.22,0.12,1.05],fe:[-0.25,0.02,1.2]},
+            {e:1,h:[0.26,0.42,1.75],el:[0.33,0.2,1.55],d:[0.2,0.2,0.95],n:[0,-0.2,0.9],fh:[-0.22,0.15,1.1],fe:[-0.26,0.05,1.2]}],
+         b:[{e:0,h:[-0.3,-0.18,0.86],el:[-0.05,0.0,1.02],d:[-0.3,-0.6,-0.5],n:[-0.4,0.3,0.6],fh:[-0.27,-0.06,1.0],fe:[-0.3,0.04,1.15]},
+            {e:0.5,h:[-0.42,0.34,0.86],el:[-0.14,0.16,1.0],d:[-0.85,0.5,-0.15],n:[0,0.6,0.8],fh:[0.0,-0.2,1.05],fe:[-0.25,-0.12,1.2]},
+            {e:1,h:[-0.08,0.44,1.75],el:[-0.02,0.24,1.55],d:[-0.2,0.2,0.95],n:[0,-0.2,0.9],fh:[0.05,-0.18,1.0],fe:[-0.22,-0.12,1.15]}]}};
 function smKey(ks,e){let i=0;while(i<ks.length-2&&e>ks[i+1].e)i++;const a=ks[i],b=ks[i+1],t0=clamp((e-a.e)/(b.e-a.e),0,1),t=t0*t0*(3-2*t0),o={};for(const k in a)o[k]=k==='e'?e:lerpPose(a[k],b[k],t);return o;}
 // mezcla dos poses (para volver suave a la espera después de golpear)
 function lerpPose(a,b,t){if(typeof a==='number')return a+(b-a)*t;if(Array.isArray(a))return a.map((v,i)=>lerpPose(v,b[i],t));const o={};for(const k in a)o[k]=lerpPose(a[k],b[k],t);return o;}
@@ -3007,7 +3029,7 @@ function mkHuman3(C,scn){
   const hand=C.lefty?'L':'R',H=b=>bones[bi[b]],BHn=b=>BH[bi[b]];if(C.noRk){P.noRk=true;}
   const hd0=BHn('f3-1.'+hand).clone().sub(BHn('hand.'+hand)).normalize(),ac0=BHn('f2-1.'+hand).clone().sub(BHn('f5-1.'+hand)).normalize();
   const palm0=new T.Vector3().crossVectors(hd0,ac0).normalize();if(palm0.x*BHn('hand.'+hand).x>0)palm0.negate();
-  const d0=ac0.clone().addScaledVector(hd0,-0.25).normalize(),n0=palm0.clone().addScaledVector(d0,-palm0.dot(d0)).normalize(),w0=new T.Vector3().crossVectors(d0,n0);
+  const d0=hd0.clone().multiplyScalar(0.77).addScaledVector(ac0,0.64).normalize(),n0=palm0.clone().addScaledVector(d0,-palm0.dot(d0)).normalize(),w0=new T.Vector3().crossVectors(d0,n0);
   const M0=new T.Matrix4().makeBasis(w0,d0,n0);if(!C.noRk){const rk=mkRacket3(C,mat);rk.quaternion.setFromRotationMatrix(M0);
   rk.position.copy(hd0).multiplyScalar(0.06).addScaledVector(palm0,0.028).addScaledVector(d0,-0.01);H('hand.'+hand).add(rk);P.rk=rk;}
   // muñequera y reloj
@@ -3069,9 +3091,10 @@ function applyPoseHum(P,o,now,dt){
       const Mw=new T.Matrix4().makeBasis(wl,dl,nl);qHd=new T.Quaternion().setFromRotationMatrix(Mw.multiply(R.M0.clone().transpose()));
       // parte del giro de la muñeca lo hace el antebrazo
       const pa=F.palm.clone().applyQuaternion(qL),pb=F.palm.clone().applyQuaternion(qHd),ax=l1;pa.addScaledVector(ax,-pa.dot(ax));pb.addScaledVector(ax,-pb.dot(ax));
-      if(pa.lengthSq()>1e-6&&pb.lengthSq()>1e-6){pa.normalize();pb.normalize();let ang=Math.acos(clamp(pa.dot(pb),-1,1));if(new T.Vector3().crossVectors(pa,pb).dot(ax)<0)ang=-ang;qL=new T.Quaternion().setFromAxisAngle(ax,clamp(ang,-1.7,1.7)*0.6).multiply(qL);}
+      if(pa.lengthSq()>1e-6&&pb.lengthSq()>1e-6){pa.normalize();pb.normalize();let ang=Math.acos(clamp(pa.dot(pb),-1,1));if(new T.Vector3().crossVectors(pa,pb).dot(ax)<0)ang=-ang;qL=new T.Quaternion().setFromAxisAngle(ax,clamp(ang,-2.0,2.0)).multiply(qL);}
     }else{const fl=new T.Quaternion().setFromAxisAngle(F.ac.clone().applyQuaternion(qL),0.25);qHd=fl.multiply(qL);}
-    set('lowerarm.'+s,qU.clone().invert().multiply(qL));set('hand.'+s,qL.clone().invert().multiply(qHd));
+    let qRel=qL.clone().invert().multiply(qHd);{const ang=2*Math.acos(clamp(Math.abs(qRel.w),0,1)),mx=1.4;if(ang>mx)qRel=new T.Quaternion().slerp(qRel,mx/ang);}
+    set('lowerarm.'+s,qU.clone().invert().multiply(qL));set('hand.'+s,qRel);
     // dedos: agarran la pala o quedan relajados
     for(const [bx,axis,f,kk] of F.ax){const a=racket?(f===1?[0.35,0.35,0.3][kk-1]:[1.05,1.25,0.85][kk-1]):(f===1?0.25:[0.55,0.75,0.5][kk-1]);B[bx].quaternion.setFromAxisAngle(axis,a);}
   };
