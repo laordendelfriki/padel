@@ -120,9 +120,11 @@ Cada fase se publica por separado para que Xavi la pruebe.
 - La pantalla de carrera actual se mantiene accesible.
 - Vecinos con 3–4 personas.
 
-## Pendiente de Xavi
-- Ropa del patrocinador frente a ropa comprada en torneos.
-- Si el barrio sustituye a la pantalla de carrera como sitio principal.
+## Decidido con Xavi (aprobó las propuestas)
+- **Ropa en torneos**: si tienes patrocinador de ropa/zapatillas, en los torneos llevas su equipación (como ahora, con su pequeño extra). En el barrio, en casa y en partidos abiertos llevas tu ropa comprada. Sin patrocinador, llevas siempre la tuya.
+- **El barrio es el sitio principal de la carrera**: al entrar en la carrera apareces en el barrio. La pantalla de carrera actual sigue accesible desde la estación y desde un botón fijo; ir a un torneo es siempre un toque.
+
+Estado: **aprobado** por Xavi el 12/11/2026.
 
 ## Lo que queda a criterio de quien construya
 - El aspecto exacto de cada edificio y la distribución del barrio dentro de lo descrito.
