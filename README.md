@@ -11,9 +11,10 @@ Juego de pádel para móvil y PC creado para **La Orden del Friki**.
 - **Reglas del pádel:** saque en diagonal, paredes, por 3 / por 4 saliendo por la puerta, ventaja o punto de oro y tie-break
 - **Ambiente:** gradas con público, vallas publicitarias, banquillos, silla del árbitro y pista con cristal y malla
 - Ayuda de movimiento (opcional) y aviso de timing en cada golpe
+- **Jugadores realistas:** cuerpo humano completo con esqueleto (dedos y párpados incluidos), piel real, ojos, cejas, pelo y barba; físico distinto según la potencia y la velocidad de cada jugador. Recursos CC0 de MakeHuman (ver `players/CREDITOS.md`). En la pausa se puede elegir *3D realistas*, *3D ligeros* (móviles antiguos) o *clásicos (2D)*
 
 ## Controles
 - **Móvil (en horizontal):** desliza a la izquierda para moverte y usa los botones de la derecha.
 - **PC:** WASD o flechas · J bandeja · K globo · L dejada · I remate · P pausa · 1-0 emojis.
 
-Todo el juego es un único archivo `index.html`, sin dependencias (el online usa PeerJS).
+El juego es el archivo `index.html`; los jugadores realistas se cargan de la carpeta `players/` (unos 3 MB). El online usa PeerJS.
