@@ -209,5 +209,16 @@ test('mapa unido: andar de un barrio a otro, coche básico, conducir y autopista
   assert(r.basico&&r.aPie==='bajo'&&r.conduce&&r.avanza>1&&r.bajado&&r.torneos,'resultado '+JSON.stringify(r));
 }));
 
+test('llamar al coche y móvil con torneos, compañeros y mapa',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.barrioEnter();await w(800);
+    B.pos={x:-15,z:-6.6};B.face=Math.PI/2;document.querySelector('#barCall').click();const cp=B.carObj.position,dist=Math.hypot(cp.x-B.pos.x,cp.z-B.pos.z);
+    document.querySelector('#barPhoneB').click();const abierto=document.querySelector('#barPhone').classList.contains('on');
+    document.querySelector('#barPhone [data-ph=mates]').click();const mates=!!document.querySelector('#barPhone h3')&&document.querySelector('#barPhone h3').textContent;
+    document.querySelector('#barPhone [data-ph=home]').click();document.querySelector('#barPhone [data-ph=mapa]').click();const mapa=!!document.querySelector('#barPhone .ph-map em');
+    document.querySelector('#barPhone [data-ph=home]').click();document.querySelector('#barPhone [data-ph=torneos]').click();document.querySelector('#barPhone [data-pact=play]').click();await w(400);
+    const fuera=!B.on;return {dist,abierto,mates,mapa,fuera};});
+  assert(r.dist<5&&r.abierto&&r.mates==='Compañeros'&&r.mapa&&r.fuera,'resultado '+JSON.stringify(r));
+}));
+
 module.exports={withCar};
 if(require.main===module)run();
