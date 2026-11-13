@@ -88,5 +88,14 @@ test('menú Carrera abre el barrio',async()=>withCar({},async({page})=>{
   assert(await visible(page,'#barrio'),'no se abrió el barrio');
 }));
 
+test('comprar pala cambia la pala del jugador del barrio',async()=>withCar({},async({page})=>{
+  await page.evaluate(()=>{const P=window.__padel;P.CAR.money=1000;P.barrioEnter();});await page.waitForTimeout(600);
+  const before=await page.evaluate(()=>window.__padel.BAR.P&&window.__padel.BAR.P.sigB);
+  await page.evaluate(()=>{window.__padel.barrioOpen('padel');document.querySelector('#barPanel [data-act=buy][data-id=voltj]').click();});
+  await page.waitForTimeout(800);
+  const r=await page.evaluate(()=>{const P=window.__padel;return {sig:P.BAR.P&&P.BAR.P.sigB,want:P.sigOf(P.CHARS[P.CAR.me])};});
+  assert(before&&r.sig&&r.sig!==before&&r.sig.startsWith(r.want),'el jugador del barrio no se actualizó: '+JSON.stringify({before,...r}));
+}));
+
 module.exports={withCar};
 if(require.main===module)run();

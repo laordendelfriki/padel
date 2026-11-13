@@ -3342,7 +3342,10 @@ function barrioTick(){
     sp=BAR_SPEED;
     if(!BAR.path.length&&BAR.dest){const id=BAR.dest;BAR.dest=null;barrioOpen(id);if(!BAR.on)return;}}
   if(sp>0)BAR.gait=(BAR.gait+dt*sp*2.9)%(Math.PI*400);
-  const C=CHARS[CAR.me],P=BAR.P,o=pose3(C,{gait:BAR.gait,mv:[0,sp,sp],time:now/1000,seed:0});
+  let C=CHARS[CAR.me],P=BAR.P;
+  // si ha cambiado su aspecto (pala nueva, ropa…), se rehace el modelo
+  const sig=sigOf(C)+useHum();if(P.sigB!==sig){disposePlayer3(P);P=BAR.P=useHum()?mkHuman3(C,BAR.scene):mkPlayer3(C,BAR.scene);P.blob.visible=false;P.sigB=sig;}
+  const o=pose3(C,{gait:BAR.gait,mv:[0,sp,sp],time:now/1000,seed:0});
   if(P.hum)applyPoseHum(P,o,now);else applyPose3(P,o);
   const s=(C.h||1.8)/1.8*1.5;P.g.position.set(BAR.pos.x,0,BAR.pos.z);P.g.rotation.y=BAR.face;P.g.scale.set(s,s,s);P.g.visible=true;
 }
@@ -3462,7 +3465,7 @@ function frame(now){
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
-window.__padel={playUserMatch,coachPrice,carHome,carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
+window.__padel={sigOf,playUserMatch,coachPrice,carHome,carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>
