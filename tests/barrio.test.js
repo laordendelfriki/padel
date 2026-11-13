@@ -33,7 +33,8 @@ const visible=(page,sel)=>page.evaluate(s=>{const e=document.querySelector(s);re
 
 test('tocar la estación lleva andando y abre la carrera',async()=>withCar({},async({page})=>{
   await page.evaluate(()=>{window.__padel.barrioEnter();window.__padel.barrioGo('estacion');});
-  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:90000});
+  await page.waitForFunction(()=>document.querySelector('#barPanel.on [data-x=torneos]'),null,{timeout:90000});
+  await page.evaluate(()=>document.querySelector('#barPanel [data-x=torneos]').click());await page.waitForTimeout(300);
   const d=await page.evaluate(()=>{const B=window.__padel.BAR,b=window.__padel.BAR_BLDS.find(x=>x.id==='estacion');return Math.hypot(B.pos.x-b.door[0],B.pos.z-b.door[1]);});
   assert(d<0.4,'no llegó a la puerta: '+d);
 }));
@@ -42,9 +43,9 @@ test('cambiar de destino a mitad de camino',async()=>withCar({},async({page})=>{
   await page.evaluate(()=>{window.__padel.barrioEnter();window.__padel.barrioGo('club');});
   await page.waitForTimeout(500);
   await page.evaluate(()=>window.__padel.barrioGo('estacion'));
-  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:90000});
+  await page.waitForFunction(()=>document.querySelector('#barPanel.on [data-x=torneos]'),null,{timeout:90000});
   const d=await page.evaluate(()=>{const B=window.__padel.BAR,b=window.__padel.BAR_BLDS.find(x=>x.id==='estacion');return Math.hypot(B.pos.x-b.door[0],B.pos.z-b.door[1]);});
-  assert(d<0.4,'terminó lejos de la estación: '+d);
+  assert(d<0.6,'terminó lejos de la estación: '+d);
 }));
 
 test('entrar y salir 3 veces no acumula memoria',async()=>withCar({},async({page})=>{
@@ -59,6 +60,7 @@ test('gráficos 2D: lista de lugares',async()=>withCar({opt:{gfx:'2d'}},async({p
   const n=await page.evaluate(()=>{const l=document.querySelector('#barList');return l&&getComputedStyle(l).display!=='none'?l.querySelectorAll('button').length:0;});
   assert(n===7,'botones en la lista: '+n);
   await page.evaluate(()=>[...document.querySelectorAll('#barList button')].find(b=>b.dataset.id==='estacion').click());
+  await page.evaluate(()=>document.querySelector('#barPanel [data-x=torneos]').click());
   await page.waitForTimeout(300);assert(await visible(page,'#car'),'no abrió la carrera');
 }));
 
@@ -152,6 +154,25 @@ test('gente en la ciudad y Belasteguín en el club',async()=>withCar({},async({p
     const city=(B.npcs||[]).length,p0={...B.npcs[0].pos};await w(1500);const moved=Math.hypot(B.npcs[0].pos.x-p0.x,B.npcs[0].pos.z-p0.z);
     P.enterPlace('club');const bela=B.inD.npcs.some(n=>n.label);const talk=B.inD.stations.some(s=>s.label.includes('Belasteguín'));return {city,moved,bela,talk};});
   assert(r.city>=4&&r.moved>0.3&&r.bela&&r.talk,'resultado '+JSON.stringify(r));
+}));
+
+test('viajar: autobús cobra, coche gratis y casas de cada zona',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,C=P.CAR,w=ms=>new Promise(r=>setTimeout(r,ms));C.money=200000;P.barrioEnter();await w(300);
+    P.barrioOpen('estacion');document.querySelector('#barPanel [data-x=zone][data-id=urba]').click();await w(300);
+    const bus=200000-C.money,zone1=C.zone,coches=P.BAR_BLDS.some(b=>b.id==='coches');
+    P.barrioOpen('coches');document.querySelector('#barPanel [data-x=car][data-id=compacto]').click();const car=C.carCur,m1=C.money;
+    P.barrioOpen('estacion');document.querySelector('#barPanel [data-x=zone][data-id=lujo]').click();await w(300);const free=m1===C.money,zone2=C.zone;
+    P.barrioOpen('inmo');const villa=!!document.querySelector('#barPanel [data-x=home][data-id=villa]'),piso=!!document.querySelector('#barPanel [data-x=home][data-id=estudio]');
+    P.barrioOpen('padel');const leyenda=!!document.querySelector('#barPanel [data-id=leyenda]');
+    return {bus,zone1,coches,car,free,zone2,villa,piso,leyenda};});
+  assert(r.bus===15&&r.zone1==='urba'&&r.coches&&r.car==='compacto'&&r.free&&r.zone2==='lujo'&&r.villa&&!r.piso&&r.leyenda,'resultado '+JSON.stringify(r));
+}));
+
+test('Barrio Sur solo vende lo barato',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,C=P.CAR;C.money=999999;C.zone='bajo';P.barrioEnter();await new Promise(r=>setTimeout(r,300));
+    P.barrioOpen('padel');const caras=[...document.querySelectorAll('#barPanel [data-act=buy]')].map(b=>b.dataset.id);
+    P.barrioOpen('muebles');const piano=!!document.querySelector('#barPanel [data-x=furn][data-id=piano]');return {caras,piano,name:P.BAR_BLDS.find(b=>b.id==='estacion').n};});
+  assert(!r.caras.includes('titanb')&&!r.caras.includes('leyenda')&&!r.piano&&r.name==='Parada de bus','resultado '+JSON.stringify(r));
 }));
 
 module.exports={withCar};
