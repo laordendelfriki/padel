@@ -20,6 +20,17 @@ canvas#c{position:fixed;inset:0;display:block}
 canvas#c3{position:fixed;inset:0;display:none;width:100%;height:100%}body.g3 canvas#c3{display:block}
 .screen{position:fixed;inset:0;display:none;align-items:center;justify-content:flex-start;flex-direction:column;background:rgba(8,13,26,.82);backdrop-filter:blur(3px);z-index:20;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 14px max(14px,env(safe-area-inset-left));overflow-y:auto;touch-action:pan-y}
 .screen.on{display:flex}
+#barrio{background:none;backdrop-filter:none;pointer-events:none;padding:0}
+#barrio>*{pointer-events:auto}
+#barrio .barHud{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));display:flex;gap:8px;flex-wrap:wrap}
+#barrio .barHud .big{min-width:0;font-size:14px;padding:8px 14px}
+#barTip{position:absolute;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(8,13,26,.75);color:#fff;padding:6px 14px;border-radius:999px;font-size:13px;pointer-events:none!important;white-space:nowrap}
+#barList{margin:auto;background:rgba(8,13,26,.9);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;max-width:420px;width:calc(100% - 32px)}
+#barList h2{margin:0 0 4px;text-align:center;font-family:'Bebas Neue',Impact;letter-spacing:1px}
+#barPanel{display:none}
+#barPanel.on{display:flex;flex-direction:column;gap:8px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(10,16,30,.96);border:1px solid rgba(216,255,62,.3);border-radius:16px;padding:16px;max-width:560px;width:calc(100% - 32px);max-height:calc(100% - 90px);overflow:auto}
+#barToast{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:var(--acc);color:#0a1020;font-weight:800;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none!important}
+#barToast.on{opacity:1}
 .wrap{width:100%;max-width:880px;margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px}
 h1{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;letter-spacing:2px;margin:0;line-height:.95;text-align:center}
 .logo{font-size:clamp(46px,9vw,92px);color:var(--acc);text-shadow:0 4px 0 #6b7f12,0 10px 30px rgba(216,255,62,.25)}
@@ -188,6 +199,12 @@ body.touch #keys{display:none}
 <body>
 <canvas id="c3"></canvas>
 <canvas id="c"></canvas>
+
+<!-- BARRIO -->
+<div id="barrio" class="screen">
+  <div class="barHud"><button id="barTour" class="big pri">🏆 Torneos</button><button id="barCar" class="big">📋 Carrera</button><button id="barMenu" class="big">🏠 Menú</button></div>
+  <div id="barTip"></div><div id="barList"></div><div id="barPanel"></div><div id="barToast"></div>
+</div>
 
 <!-- MENU -->
 <div id="menu" class="screen on"><div class="wrap">
@@ -3194,14 +3211,16 @@ const BAR_BLDS=[
   {id:'padel',n:'La Orden del Friki – Pádel',box:[-8,7,8,15],door:[0,6.7],col:'#3a1d5c'},
   {id:'muebles',n:'Muebles',box:[15,7,26,16],door:[20.5,6.7],col:'#c08552'},
   {id:'estacion',n:'Estación',box:[24.5,-3.5,29.5,3.5],door:[24.2,0],col:'#adb5bd'}];
-const BAR={on:false,scene:null,cam:null,P:null,path:[],pos:{x:0,z:0},dest:null,face:0,gait:0,drag:null,camOff:{x:0,z:0}};
+const BAR={on:false,scene:null,cam:null,P:null,path:[],pos:{x:0,z:4.6},dest:null,face:0,gait:0,drag:null,camOff:{x:0,z:0}};
 // red de puntos de paso por calles y plaza (se calcula una vez; no depende del 3D)
 const BAR_NET=(()=>{const nodes=[],edges=[],id={};const add=(k,x,z)=>{id[k]=nodes.length;nodes.push({x,z});};
-  const xs=[-21,-12,0,12,20.5,24];for(const x of xs){add('N'+x,x,-5.5);add('S'+x,x,5.5);}for(const x of [-12,0,12,24])add('M'+x,x,0);
+  const xs=[-21,-12,0,12,20.5,24];for(const x of xs){add('N'+x,x,-5.5);add('S'+x,x,5.5);}for(const x of [-12,12,24])add('M'+x,x,0);
+  add('R1',-4,-3.5);add('R2',4,-3.5);add('R3',4,3.5);add('R4',-4,3.5);
   const link=(a,b)=>edges.push([id[a],id[b]]);
   for(let i=1;i<xs.length;i++){link('N'+xs[i-1],'N'+xs[i]);link('S'+xs[i-1],'S'+xs[i]);}
-  for(const x of [-12,0,12,24]){link('N'+x,'M'+x);link('M'+x,'S'+x);}
-  link('M-12','M0');link('M0','M12');link('M12','M24');
+  for(const x of [-12,12,24]){link('N'+x,'M'+x);link('M'+x,'S'+x);}
+  link('R1','R2');link('R2','R3');link('R3','R4');link('R4','R1');link('N0','R1');link('N0','R2');link('S0','R3');link('S0','R4');
+  link('M-12','R1');link('M-12','R4');link('M12','R2');link('M12','R3');link('M12','M24');
   for(const b of BAR_BLDS){add('D'+b.id,b.door[0],b.door[1]);const near=b.id==='estacion'?'M24':(b.door[1]<0?'N':'S')+b.door[0];link('D'+b.id,near);}
   return {nodes,edges};})();
 // ruta más corta (Dijkstra) por la red; si el destino cae dentro de un edificio, se va a su puerta
@@ -3222,7 +3241,7 @@ function buildBarrio3(){
   const T=THREE,sc=new T.Scene();sc.background=new T.Color(0x9fd3ff);sc.fog=new T.Fog(0x9fd3ff,55,110);
   sc.add(new T.HemisphereLight(0xffffff,0x6b8f5a,1.1));const sun=new T.DirectionalLight(0xfff1d6,2.4);sun.position.set(-18,30,14);sun.target.position.set(0,0,0);sc.add(sun);sc.add(sun.target);
   sun.castShadow=true;const sm=isTouch?1024:2048;sun.shadow.mapSize.set(sm,sm);Object.assign(sun.shadow.camera,{left:-36,right:36,top:26,bottom:-26,near:5,far:80});sun.shadow.bias=-0.0005;
-  const add=(m,cast,rec)=>{m.castShadow=!!cast;m.receiveShadow=rec!==false;sc.add(m);return m;};
+  let curB=null;BAR.bm={};const add=(m,cast,rec)=>{m.castShadow=!!cast;m.receiveShadow=rec!==false;if(curB){m.userData.bld=curB;if(!Array.isArray(m.material)){m.material=m.material.clone();m.material.userData.wasT=m.material.transparent;m.material.userData.op0=m.material.opacity;}(BAR.bm[curB]||(BAR.bm[curB]=[])).push(m);}sc.add(m);return m;};
   const box=(x0,z0,x1,z1,y0,y1,mat,cast)=>{const m=new T.Mesh(new T.BoxGeometry(x1-x0,y1-y0,z1-z0),mat);m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);return add(m,cast);};
   // suelo: césped, calles, plaza y avenida
   box(-34,-24,34,24,-0.2,0,MS(0x7fb069,{roughness:1}));
@@ -3234,7 +3253,7 @@ function buildBarrio3(){
     const w=new T.Mesh(new T.CylinderGeometry(2.35,2.35,0.1,32),MS(0x4aa3df,{roughness:0.15,metalness:0.2,emissive:0x0b3550}));w.position.y=0.5;add(w,false);
     const c=new T.Mesh(new T.CylinderGeometry(0.35,0.5,1.6,16),st);c.position.y=1.1;add(c,true);const t=new T.Mesh(new T.CylinderGeometry(0.9,0.9,0.18,24),st);t.position.y=1.9;add(t,true);}
   // edificios
-  for(const b of BAR_BLDS){const [x0,z0,x1,z1]=b.box,col=new T.Color(b.col),front=b.door[1]<z0?-1:b.door[1]>z1?1:0,side=b.id==='estacion';
+  for(const b of BAR_BLDS){curB=b.id;const [x0,z0,x1,z1]=b.box,col=new T.Color(b.col),front=b.door[1]<z0?-1:b.door[1]>z1?1:0,side=b.id==='estacion';
     const h=b.id==='club'?4:b.id==='estacion'?4.5:z0>0?3.2:b.id==='inmo'?7:6;
     if(b.id==='club'){ // pabellón pequeño + pista exterior visible
       box(x0,z0,x1,z0+4,0,h,MS(col,{roughness:0.8}),true);box(x0-0.2,z0-0.2,x1+0.2,z0+4.2,h,h+0.3,MS(0xf4f4f4),true);
@@ -3254,14 +3273,15 @@ function buildBarrio3(){
     const door=new T.Mesh(new T.PlaneGeometry(1.4,2.3),MS(0x3d2b1f,{roughness:0.6}));door.position.set(dx,1.15,side?b.door[1]:dz);door.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);sc.add(door);
     const txt=b.id==='padel'?'LA ORDEN DEL FRIKI · PÁDEL':b.id==='estacion'?'ESTACIÓN · TORNEOS':b.n.toUpperCase();
     const neon=b.id==='padel';const sg=new T.Mesh(new T.PlaneGeometry(side?4:Math.min(9,x1-x0-1),side?0.9:1.1),new T.MeshStandardMaterial({map:signTex(txt,neon?'#140a24':'#ffffff',neon?'#d8ff3e':'#1b263b'),emissive:neon?0xffffff:0x000000,emissiveMap:neon?signTex(txt,'#140a24','#d8ff3e'):null,emissiveIntensity:neon?0.8:0,roughness:0.6}));
-    sg.position.set(side?x0-1.45:b.door[0],side?3.9:2.9,side?0:(front<0?z0-0.06:z1+0.06));sg.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);sc.add(sg);
+    sg.position.set(side?x0-1.45:b.door[0],side?3.9:2.9,side?0:(front<0?z0-0.06:z1+0.06));sg.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);sg.userData.bld=b.id;sc.add(sg);
     if(b.id==='padel'){ // escaparate friki: cartas y figuras
       const sw=new T.Mesh(new T.PlaneGeometry(4.2,1.5),new T.MeshStandardMaterial({map:cTex(256,96,(g,w,hh)=>{g.fillStyle='#0d0718';g.fillRect(0,0,w,hh);const cs=['#e63946','#f4d03f','#2ec4b6','#ffffff','#6a3fb5','#d8ff3e'];for(let i=0;i<9;i++){g.fillStyle=cs[i%cs.length];g.fillRect(10+i*27,22+(i%2)*10,20,30);}g.fillStyle='#d8ff3e';g.fillRect(20,80,w-40,4);}),emissive:0xffffff,emissiveIntensity:0.25,emissiveMap:null}));
       sw.position.set(-3.6,1.6,z0-0.04);sw.rotation.y=Math.PI;sc.add(sw);}
     {const rw=side?4.4:Math.min(8,x1-x0-1.5),rt=new T.Mesh(new T.PlaneGeometry(rw,rw*0.22),new T.MeshBasicMaterial({map:signTex(txt,neon?'#140a24':'#ffffff',neon?'#d8ff3e':'#1b263b'),side:T.DoubleSide}));
-      const top=b.id==='club'?h+0.3:h+0.25;rt.position.set((x0+x1)/2,top+rw*0.13,b.id==='club'?z0+2:(z0+z1)/2);rt.rotation.x=-0.55;sc.add(rt);
+      const top=b.id==='club'?h+0.3:h+0.25;rt.position.set((x0+x1)/2,top+rw*0.13,b.id==='club'?z0+2:(z0+z1)/2);rt.rotation.x=-0.55;rt.userData.bld=b.id;sc.add(rt);
       const post=new T.Mesh(new T.BoxGeometry(0.12,rw*0.2,0.12),MS(0x333333));post.position.set((x0+x1)/2,top+rw*0.06,rt.position.z-0.2);sc.add(post);}
     b.sign=sg;}
+  curB=null;
   // árboles (instanciados), bancos y farolas
   const trunks=[],spots=[];for(let x=-28;x<=28;x+=5.5)for(const z of [-21,21])spots.push([x+(Math.random()-0.5),z+(Math.random()-0.5)]);
   for(const [x,z] of [[-10,-2.6],[10,-2.6],[-10,2.6],[10,2.6],[-31,0],[-31,-10],[-31,10],[31,10],[31,-10],[17,0.0]])spots.push([x,z]);
@@ -3279,6 +3299,67 @@ function disposeBarrio3(){
   if(BAR.scene){BAR.scene.traverse(o=>{if(o.geometry&&!Object.values(LATHE).includes(o.geometry))o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{for(const k of ['map','emissiveMap'])if(m[k])m[k].dispose();m.dispose();});}});}
   BAR.scene=null;
 }
+
+// ---- pantalla del barrio: entrar, salir, caminar tocando y abrir los sitios ----
+const BAR_SPEED=4;   // m/s: paso ligero, para cruzar el barrio en menos de 10 s
+function barToast(t){const e=$('#barToast');e.textContent=t;e.classList.add('on');clearTimeout(barToast.t);barToast.t=setTimeout(()=>e.classList.remove('on'),2200);}
+function barrioUse3D(){return want3D()&&G3.on;}
+function barrioEnter(){
+  if(!CAR){buildCar();showScreen('car');return;}
+  showScreen('barrio');$('#barPanel').classList.remove('on');$('#barTip').textContent='Toca un sitio para ir';
+  const three=barrioUse3D(),L=$('#barList');L.style.display=three?'none':'';
+  if(!three){L.innerHTML='<h2>El barrio</h2>'+BAR_BLDS.map(b=>`<button class="big" data-id="${b.id}">${esc(b.n)}</button>`).join('');return;}
+  if(!BAR.scene){BAR.scene=buildBarrio3();BAR.cam=new THREE.PerspectiveCamera(42,CW/Math.max(1,CH),0.5,200);}
+  if(!BAR.P){const C=CHARS[CAR.me];BAR.P=useHum()?mkHuman3(C,BAR.scene):mkPlayer3(C,BAR.scene);BAR.P.blob.visible=false;BAR.P.sigB=sigOf(C)+useHum();}
+  BAR.path=[];BAR.dest=null;BAR.on=true;BAR.lt=performance.now();
+}
+function barrioLeave(){BAR.on=false;BAR.path=[];BAR.dest=null;BAR.drag=null;disposeBarrio3();}
+function barrioGo(id){const b=BAR_BLDS.find(x=>x.id===id);if(!b)return;
+  if(!BAR.on){barrioOpen(id);return;}
+  BAR.dest=id;BAR.path=barrioPath(BAR.pos,{x:b.door[0],z:b.door[1]}).slice(1);$('#barTip').textContent='Vas a: '+b.n;}
+function barrioWalkTo(x,z){BAR.dest=null;BAR.path=barrioPath(BAR.pos,{x,z}).slice(1);$('#barTip').textContent='Toca un sitio para ir';}
+function barrioOpen(id){const b=BAR_BLDS.find(x=>x.id===id);if(!b)return;
+  if(id==='estacion'){barrioLeave();buildCar();showScreen('car');return;}
+  barToast('Próximamente: '+b.n);}
+function barrioTick(){
+  if(!BAR.on||!BAR.P)return;const now=performance.now(),dt=Math.min(0.25,(now-(BAR.lt||now))/1000);BAR.lt=now;
+  let sp=0;
+  if(BAR.path.length){let left=BAR_SPEED*dt;
+    while(left>0&&BAR.path.length){const t=BAR.path[0],dx=t.x-BAR.pos.x,dz=t.z-BAR.pos.z,d=Math.hypot(dx,dz);
+      if(d>1e-4){const tf=Math.atan2(-dx,-dz);BAR.face+=Math.atan2(Math.sin(tf-BAR.face),Math.cos(tf-BAR.face))*Math.min(1,dt*10);}
+      if(d<=left){BAR.pos.x=t.x;BAR.pos.z=t.z;left-=d;BAR.path.shift();}else{BAR.pos.x+=dx/d*left;BAR.pos.z+=dz/d*left;left=0;}}
+    sp=BAR_SPEED;
+    if(!BAR.path.length&&BAR.dest){const id=BAR.dest;BAR.dest=null;barrioOpen(id);if(!BAR.on)return;}}
+  if(sp>0)BAR.gait=(BAR.gait+dt*sp*2.9)%(Math.PI*400);
+  const C=CHARS[CAR.me],P=BAR.P,o=pose3(C,{gait:BAR.gait,mv:[0,sp,sp],time:now/1000,seed:0});
+  if(P.hum)applyPoseHum(P,o,now);else applyPose3(P,o);
+  const s=(C.h||1.8)/1.8*1.5;P.g.position.set(BAR.pos.x,0,BAR.pos.z);P.g.rotation.y=BAR.face;P.g.scale.set(s,s,s);P.g.visible=true;
+}
+function barrioRender(){
+  if(!$('#barrio').classList.contains('on')){barrioLeave();return false;}
+  const R=G3.R,sz=innerWidth+'x'+innerHeight+'x'+DPR;
+  if(G3.size!==sz){G3.size=sz;R.setPixelRatio(Math.min(window.devicePixelRatio||1,isTouch?1.5:2));R.setSize(innerWidth,innerHeight,false);G3.fitKey='';}
+  if(!BAR.drag){BAR.camOff.x*=0.9;BAR.camOff.z*=0.9;}
+  const cam=BAR.cam,tx=BAR.pos.x+BAR.camOff.x,tz=BAR.pos.z+BAR.camOff.z;cam.aspect=CW/Math.max(1,CH);cam.fov=CW<CH?62:45;cam.updateProjectionMatrix();
+  cam.position.set(tx,23,tz+13);cam.lookAt(tx,0,tz-0.5);
+  // el edificio que queda entre la cámara y tu jugador se vuelve semitransparente
+  for(const b of BAR_BLDS){const ms=BAR.bm&&BAR.bm[b.id];if(!ms)continue;const hide=BAR.pos.z<b.box[1]&&b.box[1]-BAR.pos.z<2.6&&BAR.pos.x>b.box[0]-1&&BAR.pos.x<b.box[2]+1;
+    if(hide!==!!b.faded){b.faded=hide;for(const m of ms){const mt=m.material;if(Array.isArray(mt))continue;mt.transparent=hide||!!mt.userData.wasT;mt.opacity=hide?0.3:(mt.userData.op0!=null?mt.userData.op0:1);mt.depthWrite=!hide;mt.needsUpdate=true;}}}
+  R.render(BAR.scene,cam);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,CW,CH);return true;
+}
+// toques: tocar = ir; arrastrar = mirar el barrio
+cv.addEventListener('pointerdown',e=>{if(!BAR.on)return;BAR.drag={x:e.clientX,y:e.clientY,ox:BAR.camOff.x,oz:BAR.camOff.z,moved:false};});
+cv.addEventListener('pointermove',e=>{const d=BAR.drag;if(!BAR.on||!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(Math.hypot(dx,dy)>8)d.moved=true;
+  if(d.moved){const k=30/Math.max(320,CW);BAR.camOff.x=clamp(d.ox-dx*k,-18,18);BAR.camOff.z=clamp(d.oz-dy*k,-14,14);}});
+cv.addEventListener('pointerup',e=>{const d=BAR.drag;BAR.drag=null;if(!BAR.on||!d||d.moved||!BAR.scene)return;
+  const T=THREE,ray=new T.Raycaster(),v=new T.Vector2(e.clientX/CW*2-1,-(e.clientY/CH)*2+1);ray.setFromCamera(v,BAR.cam);
+  const hits=ray.intersectObjects(BAR.scene.children,true);for(const h of hits){let o=h.object;while(o&&!o.userData.bld&&o.parent)o=o.parent;if(o&&o.userData.bld){barrioGo(o.userData.bld);return;}}
+  const p=new T.Vector3();if(ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),0),p))barrioWalkTo(clamp(p.x,-29,29),clamp(p.z,-19,19));});
+cv.addEventListener('pointercancel',()=>{BAR.drag=null;});
+$('#barList').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b)barrioOpen(b.dataset.id);});
+$('#barTour').onclick=()=>{audioInit();barrioOpen('estacion');};
+$('#barCar').onclick=()=>{barrioLeave();buildCar();showScreen('car');};
+$('#barMenu').onclick=()=>{barrioLeave();showScreen('menu');};
 
 /* ---------- cámara de televisión detrás de tu cristal ---------- */
 function fit3D(sway){
@@ -3298,6 +3379,7 @@ function fit3D(sway){
 function proj3(x,y,z){const v=TV(x,y,z).project(G3.cam);return [(v.x+1)/2*CW,(1-v.y)/2*CH,v.z];}
 
 function render3D(){
+  if(BAR.on&&BAR.scene&&barrioRender())return;
   const R=G3.R,sz=innerWidth+'x'+innerHeight+'x'+DPR;
   if(G3.size!==sz){G3.size=sz;R.setPixelRatio(Math.min(window.devicePixelRatio||1,isTouch?1.5:2));R.setSize(innerWidth,innerHeight,false);G3.fitKey='';}
   const menu=!S,sway=menu?Math.sin(performance.now()/7000)*0.22:0,key=[CW,CH,VIEW.zn.toFixed(3),VIEW.zs.toFixed(3),VIEW.mirror].join('|');
@@ -3342,10 +3424,11 @@ function frame(now){
   }catch(e){console.error(e);}
   try{if(S&&(!paused||S.mode.startsWith('online')))updateFacing(dt);}catch(e){console.error(e);}
   {const sv=!!(S&&!S.over&&!paused&&S.phase==='serve'&&S.me>=0&&S.server===S.me);if(sv!==document.body.classList.contains('serving'))document.body.classList.toggle('serving',sv);}
+  try{if(BAR.on)barrioTick();}catch(e){console.error(e);}
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
-window.__padel={carAct,newCar,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
+window.__padel={carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>

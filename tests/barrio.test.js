@@ -29,5 +29,38 @@ test('hay ruta de la plaza a cada puerta y no cruza edificios',async()=>withCar(
   assert(!bad.length,bad.join('; '));
 }));
 
+const visible=(page,sel)=>page.evaluate(s=>{const e=document.querySelector(s);return !!e&&e.classList.contains('on');},sel);
+
+test('tocar la estación lleva andando y abre la carrera',async()=>withCar({},async({page})=>{
+  await page.evaluate(()=>{window.__padel.barrioEnter();window.__padel.barrioGo('estacion');});
+  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:20000});
+  const d=await page.evaluate(()=>{const B=window.__padel.BAR,b=window.__padel.BAR_BLDS.find(x=>x.id==='estacion');return Math.hypot(B.pos.x-b.door[0],B.pos.z-b.door[1]);});
+  assert(d<0.4,'no llegó a la puerta: '+d);
+}));
+
+test('cambiar de destino a mitad de camino',async()=>withCar({},async({page})=>{
+  await page.evaluate(()=>{window.__padel.barrioEnter();window.__padel.barrioGo('club');});
+  await page.waitForTimeout(500);
+  await page.evaluate(()=>window.__padel.barrioGo('estacion'));
+  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:25000});
+  const d=await page.evaluate(()=>{const B=window.__padel.BAR,b=window.__padel.BAR_BLDS.find(x=>x.id==='estacion');return Math.hypot(B.pos.x-b.door[0],B.pos.z-b.door[1]);});
+  assert(d<0.4,'terminó lejos de la estación: '+d);
+}));
+
+test('entrar y salir 3 veces no acumula memoria',async()=>withCar({},async({page})=>{
+  const n=await page.evaluate(async()=>{const P=window.__padel,w=ms=>new Promise(r=>setTimeout(r,ms));
+    P.barrioEnter();await w(400);P.barrioLeave();await w(200);const g0=P.G3.R.info.memory.geometries;
+    for(let i=0;i<3;i++){P.barrioEnter();await w(400);P.barrioLeave();await w(200);}return P.G3.R.info.memory.geometries-g0;});
+  assert(n<=5,'geometrías de más: '+n);
+}));
+
+test('gráficos 2D: lista de lugares',async()=>withCar({opt:{gfx:'2d'}},async({page})=>{
+  await page.evaluate(()=>window.__padel.barrioEnter());
+  const n=await page.evaluate(()=>{const l=document.querySelector('#barList');return l&&getComputedStyle(l).display!=='none'?l.querySelectorAll('button').length:0;});
+  assert(n===7,'botones en la lista: '+n);
+  await page.evaluate(()=>[...document.querySelectorAll('#barList button')].find(b=>b.dataset.id==='estacion').click());
+  await page.waitForTimeout(300);assert(await visible(page,'#car'),'no abrió la carrera');
+}));
+
 module.exports={withCar};
 if(require.main===module)run();
