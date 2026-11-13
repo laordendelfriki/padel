@@ -221,7 +221,7 @@ body.touch #keys{display:none}
 
 <!-- BARRIO -->
 <div id="barrio" class="screen">
-  <div class="barHud"><button id="barTour" class="big pri">🏆 Torneos</button><button id="barCar" class="big">📋 Carrera</button><button id="barMenu" class="big">🏠 Menú</button></div>
+  <div class="barHud"><button id="barTour" class="big pri">🏆 Torneos</button><button id="barTravel" class="big">🚗 Viajar</button><button id="barCar" class="big">📋 Carrera</button><button id="barMenu" class="big">🏠 Menú</button></div>
   <div id="barMoney"></div><div id="barZoom"><button id="barZin" aria-label="Acercar">＋</button><button id="barZout" aria-label="Alejar">－</button></div><div id="barJoy"><div id="barKnob"></div></div><button id="barAct" class="big pri" style="display:none"></button>
   <div id="barTip">Muévete con el joystick · entra en los sitios</div><div id="barList"></div><div id="barPanel"></div><div id="barToast"></div><div id="barFade"></div>
 </div>
@@ -2208,7 +2208,19 @@ const RACKETS=[{id:'barrio',n:'Palas del Barrio',p:0,kit:{rk:'#8a5a2b',rk2:'#f3e
   {id:'cometa',n:'Cometa Control',p:1800,kit:{rk:'#ffffff',rk2:'#e63946'},b:{ctl:0.03,pow:0.01}},
   {id:'voltp',n:'Volt Power 2.0',p:3500,kit:{rk:'#f4d03f',rk2:'#151515'},b:{pow:0.04,ctl:0.005}},
   {id:'carbono',n:'Carbono X Pro',p:8000,kit:{rk:'#151515',rk2:'#39d3ff'},b:{pow:0.04,ctl:0.03}},
-  {id:'titanb',n:'Titán Black Edition',p:20000,kit:{rk:'#0b0b0b',rk2:'#f4d03f'},b:{pow:0.055,ctl:0.04,spd:0.01}}];
+  {id:'titanb',n:'Titán Black Edition',p:20000,kit:{rk:'#0b0b0b',rk2:'#f4d03f'},b:{pow:0.055,ctl:0.04,spd:0.01}},
+  {id:'calle',n:'Callejera 2.0',p:250,kit:{rk:'#6c757d',rk2:'#e9ecef'},b:{pow:0.01}},
+  {id:'friki',n:'La Orden Friki Edition',p:900,kit:{rk:'#151515',rk2:'#d8ff3e'},b:{ctl:0.02,spd:0.005}},
+  {id:'brisa',n:'Brisa Soft',p:1200,kit:{rk:'#90e0ef',rk2:'#0077b6'},b:{ctl:0.025}},
+  {id:'rayo',n:'Rayo Attack',p:2600,kit:{rk:'#ffd60a',rk2:'#003566'},b:{pow:0.035}},
+  {id:'nube',n:'Nube Comfort',p:3000,kit:{rk:'#f8f9fa',rk2:'#adb5bd'},b:{ctl:0.035,spd:0.005}},
+  {id:'vortex',n:'Vortex Hybrid',p:5200,kit:{rk:'#7209b7',rk2:'#4cc9f0'},b:{pow:0.03,ctl:0.03}},
+  {id:'lava',n:'Lava Smash',p:6500,kit:{rk:'#d00000',rk2:'#ffba08'},b:{pow:0.05,ctl:0.01}},
+  {id:'glaciar',n:'Glaciar Control Pro',p:11000,kit:{rk:'#caf0f8',rk2:'#023e8a'},b:{ctl:0.05,pow:0.02}},
+  {id:'eclipse',n:'Eclipse Carbon 18K',p:15000,kit:{rk:'#10002b',rk2:'#ff9e00'},b:{pow:0.05,ctl:0.035,spd:0.005}},
+  {id:'oro',n:'Corona de Oro',p:45000,kit:{rk:'#d4af37',rk2:'#151515'},b:{pow:0.06,ctl:0.05,spd:0.015}},
+  {id:'leyenda',n:'Leyenda Bela Signature',p:90000,kit:{rk:'#0b3d3a',rk2:'#d4af37'},b:{pow:0.065,ctl:0.06,spd:0.02}}];
+RACKETS.sort((a,b)=>a.p-b.p);
 const PRIZE={FIP:[1200,600,300,150,60],P2:[8000,4000,2000,1000,500],P1:[20000,10000,5000,2500,1200],Major:[40000,20000,10000,5000,2500],Finals:[60000,30000,15000,7500]};
 const TRAVEL={FIP:150,P2:400,P1:700,Major:1000,Finals:0};
 const eur=n=>(n<0?'-':'')+Math.abs(Math.round(n)).toLocaleString('es-ES')+' €';
@@ -3233,7 +3245,7 @@ function coaches3(){
 /* ============ BARRIO ============ */
 // Barrio de 60 × 40 m centrado en el origen (x a la derecha, z hacia la cámara). Dos calles largas (z=±5,5),
 // una plaza abierta en el centro y la avenida de la estación al este. Cada edificio: caja, puerta y color.
-const BAR_BLDS=[
+let BAR_BLDS=[
   {id:'casa',n:'Tu casa',box:[-27,-17,-15,-7],door:[-21,-6.7],col:'#e9c46a'},
   {id:'club',n:'Bela Pádel Club',box:[-9,-18,9,-7],door:[0,-6.7],col:'#2a9d8f'},
   {id:'inmo',n:'Inmobiliaria',box:[15,-16,26,-7],door:[20.5,-6.7],col:'#8ecae6'},
@@ -3280,11 +3292,11 @@ function cityTex(k){if(CITY_TEX[k])return CITY_TEX[k];const T=THREE;let t;
   else if(k==='hormigon')t=rtex(256,256,(g,w,h)=>{g.fillStyle='#8f9296';g.fillRect(0,0,w,h);noiseFill(g,w,h,22);});
   return CITY_TEX[k]=t;}
 // fachada: enlucido o ladrillo, ventanas con marco y alféizar, bajo comercial
-function facadeTex(col,floors,cols,brick,shop){return cTex(512,512,(g,w,h)=>{
+function facadeTex(col,floors,cols,brick,shop){const R2=isTouch?512:1024;return cTex(R2,R2,(g,w,h)=>{const kq=w/512;g.scale(kq,kq);w=512;h=512;
   g.fillStyle=col;g.fillRect(0,0,w,h);
   if(brick){for(let y=0;y<h;y+=12)for(let x=-(y/12%2)*12;x<w;x+=24){const c=0.85+Math.random()*0.25;g.fillStyle=`rgba(0,0,0,${0.06+Math.random()*0.08})`;g.fillRect(x,y,23,11);}
     g.fillStyle='rgba(255,255,255,0.06)';for(let y=11;y<h;y+=12)g.fillRect(0,y,w,1);}
-  noiseFill(g,w,h,14);
+  noiseFill(g,g.canvas.width,g.canvas.height,14);
   const fh=h/floors,cw=w/cols;
   for(let f=shop?1:0;f<floors;f++)for(let c=0;c<cols;c++){const x=c*cw+cw*0.22,y=h-(f+1)*fh+fh*0.2,ww=cw*0.56,hh=fh*0.6;
     g.fillStyle='rgba(30,30,30,0.35)';g.fillRect(x-4,y-4,ww+8,hh+10);g.fillStyle='#e9e4d8';g.fillRect(x-3,y-3,ww+6,hh+6);
@@ -3304,9 +3316,29 @@ function carMesh(col){const T=THREE,g=new T.Group(),body=new T.MeshPhysicalMater
   for(const x of [-0.85,0.85])for(const z of [-1.35,1.35]){const w=new T.Mesh(new T.CylinderGeometry(0.34,0.34,0.24,18),tire);w.rotation.z=Math.PI/2;w.position.set(x,0.34,z);g.add(w);const r=new T.Mesh(new T.CylinderGeometry(0.2,0.2,0.26,12),rim);r.rotation.z=Math.PI/2;r.position.set(x,0.34,z);g.add(r);}
   for(const x of [-0.6,0.6]){const l=new T.Mesh(new T.BoxGeometry(0.35,0.12,0.04),new T.MeshStandardMaterial({color:0xffffff,emissive:0xfff2c8,emissiveIntensity:0.5}));l.position.set(x,0.7,2.1);g.add(l);const t=new T.Mesh(new T.BoxGeometry(0.35,0.12,0.04),new T.MeshStandardMaterial({color:0x880000,emissive:0x550000}));t.position.set(x,0.75,-2.1);g.add(t);}
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
+// decorado propio de cada zona
+function zoneDecor(sc,ZN,blob){const T=THREE;
+  if(ZN==='lujo'){ // mar con yates al sur y palmeras en el paseo
+    const sea=new T.Mesh(new T.PlaneGeometry(220,90),new T.MeshPhysicalMaterial({color:0x1a6ea8,roughness:0.08,metalness:0.2,clearcoat:1}));sea.rotation.x=-Math.PI/2;sea.position.set(0,0.02,67);sc.add(sea);
+    const sand=new T.Mesh(new T.PlaneGeometry(220,10),MS(0xe9d8a6,{roughness:1}));sand.rotation.x=-Math.PI/2;sand.position.set(0,0.015,25);sc.add(sand);
+    for(let i=0;i<5;i++){const y=new T.Group();const hull=new T.Mesh(new T.BoxGeometry(2.4,1.1,9),MS(0xf8f9fa,{roughness:0.3}));hull.position.y=0.5;y.add(hull);const cab=new T.Mesh(new T.BoxGeometry(1.8,1,4),MS(0x1b263b,{roughness:0.2,metalness:0.4}));cab.position.set(0,1.4,-0.5);y.add(cab);y.position.set(-30+i*15,0,38+(i%2)*8);y.rotation.y=0.3*(i%3-1);sc.add(y);}
+    for(let x=-26;x<=26;x+=6.5){const tr=new T.Mesh(new T.CylinderGeometry(0.12,0.2,5,7),MS(0x8d6e4c));tr.position.set(x,2.5,9.4);sc.add(tr);for(let k=0;k<6;k++){const lf=new T.Mesh(new T.ConeGeometry(0.35,2.6,4),MS(0x2d6a4f,{roughness:0.9}));lf.position.set(x+Math.cos(k)*0.9,4.8,9.4+Math.sin(k)*0.9);lf.rotation.set(Math.sin(k)*1.2,0,Math.cos(k)*1.2);sc.add(lf);}blob(x,9.4,2.6,2.6,0.02);}
+    for(let x=-60;x<=60;x+=12){const hh=4+((x*3)%3+3)%3*2;const v=new T.Mesh(new T.BoxGeometry(9,hh,8),MS(0xf8f9fa,{roughness:0.6}));v.position.set(x,hh/2,-40);sc.add(v);const gl=new T.Mesh(new T.BoxGeometry(8,hh*0.5,0.1),new T.MeshPhysicalMaterial({color:0x7fb7d9,roughness:0.05,metalness:0.3}));gl.position.set(x,hh*0.55,-35.9);sc.add(gl);}
+    for(const [x,z] of [[-21,-11],[20.5,-11],[20.5,11.5]]){const pool=new T.Mesh(new T.BoxGeometry(5,0.05,2.5),new T.MeshPhysicalMaterial({color:0x48cae4,roughness:0.05,clearcoat:1}));pool.position.set(x,0.03,z>0?17.2:-18.6);sc.add(pool);}}
+  else if(ZN==='urba'){ // chalets de fondo con tejado y setos
+    for(let x=-60;x<=60;x+=10)for(const z of [-36,36]){const g=new T.Group();const w2=new T.Mesh(new T.BoxGeometry(7,4,6),MS(0xf4efe6,{roughness:0.8}));w2.position.y=2;g.add(w2);const rf=new T.Mesh(new T.CylinderGeometry(1,1,7.4,3,1),MS(0xa23e2a,{roughness:0.85}));rf.rotation.z=Math.PI/2;rf.scale.set(1,3.6,2.4);rf.position.y=4.7;g.add(rf);g.position.set(x,0,z);sc.add(g);}
+    const hedge=MS(0x355e3b,{roughness:1});for(const zz of [-19.3,19.3]){const h2=new T.Mesh(new T.BoxGeometry(56,1,0.8),hedge);h2.position.set(0,0.5,zz);sc.add(h2);}}
+  else if(ZN==='bajo'){ // contenedores y una canasta en la plaza
+    for(const [x,z,c] of [[-30,-9,0x2d6a4f],[-28.4,-9,0x1d3557],[28,9,0x6c584c]]){const ct=new T.Mesh(new T.BoxGeometry(1.4,1.3,1),MS(c,{roughness:0.8}));ct.position.set(x,0.65,z);sc.add(ct);}
+    const pole=new T.Mesh(new T.CylinderGeometry(0.08,0.08,3.2,8),MS(0x495057,{metalness:0.6}));pole.position.set(10.5,1.6,0);sc.add(pole);const bd=new T.Mesh(new T.BoxGeometry(0.06,1,1.6),MS(0xf8f9fa));bd.position.set(10.3,3.2,0);sc.add(bd);
+    const hoop=new T.Mesh(new T.TorusGeometry(0.25,0.02,6,16),MS(0xe85d04));hoop.rotation.x=Math.PI/2;hoop.position.set(10,2.9,0);sc.add(hoop);}
+  // tu coche aparcado en la avenida
+  if(CAR&&CAR.carCur&&carBy(CAR.carCur)){const c=carMesh(carBy(CAR.carCur).c);c.position.set(18.5,0,0.4);c.rotation.y=Math.PI/2;sc.add(c);blob(18.5,0.4,5,2.6,0.02);BAR.myCarBox=[16.3,-0.5,20.7,1.3];}else BAR.myCarBox=null;
+}
 function buildBarrio3(){
   const T=THREE,sc=new T.Scene();sc.background=skyTex();sc.fog=new T.Fog(0xcfdde8,45,120);cityEnv(sc);
-  sc.add(new T.HemisphereLight(0xdfeeff,0x6f6a5a,0.75));const sun=new T.DirectionalLight(0xfff0d8,2.6);sun.position.set(-22,34,16);sun.target.position.set(0,0,0);sc.add(sun);sc.add(sun.target);
+  sc.add(new T.HemisphereLight(0xdfeeff,0x6f6a5a,0.85));{const gl=new T.Sprite(new T.SpriteMaterial({map:cTex(128,128,(g,w,h)=>{const gr=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);gr.addColorStop(0,'rgba(255,255,240,1)');gr.addColorStop(0.15,'rgba(255,245,210,0.9)');gr.addColorStop(1,'rgba(255,230,180,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}),blending:T.AdditiveBlending,depthWrite:false,fog:false}));gl.position.set(-70,60,-110);gl.scale.set(40,40,1);sc.add(gl);}
+  const sun=new T.DirectionalLight(0xfff0d8,2.6);sun.position.set(-22,34,16);sun.target.position.set(0,0,0);sc.add(sun);sc.add(sun.target);
   sun.castShadow=false;
   let curB=null;BAR.bm={};const add=(m,cast,rec)=>{m.castShadow=!!cast;m.receiveShadow=rec!==false;if(curB){m.userData.bld=curB;(BAR.bm[curB]||(BAR.bm[curB]=[])).push(m);}sc.add(m);return m;};
   const box=(x0,z0,x1,z1,y0,y1,mat,cast)=>{const m=new T.Mesh(new T.BoxGeometry(x1-x0,y1-y0,z1-z0),mat);m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);return add(m,cast);};
@@ -3322,16 +3354,29 @@ function buildBarrio3(){
     const w=new T.Mesh(new T.CylinderGeometry(2.35,2.35,0.08,40),new T.MeshPhysicalMaterial({color:0x2d7fb8,roughness:0.05,metalness:0.1,transmission:0.3,clearcoat:1}));w.position.y=0.55;add(w,false);
     const c=new T.Mesh(new T.CylinderGeometry(0.32,0.45,1.7,20),st);c.position.y=1.15;add(c,true);const t=new T.Mesh(new T.CylinderGeometry(0.95,0.85,0.16,28),st);t.position.y=2.0;add(t,true);}
   // edificios con fachada realista
-  const FAC={casa:['#d9c7a3',0,1],club:['#e7ecef',0,0],inmo:['#9fb8c9',0,1],ropa:['#b5543a',1,1],padel:['#1d1530',0,1],muebles:['#8a5a3c',1,1],estacion:['#c9c9c9',0,0]};
+  const ZN=curZone(),FACZ={
+    bajo:{casa:['#9c8f80',1,0],club:['#c9c2b5',0,0],inmo:['#a39b8b',0,1],ropa:['#8d6e63',1,1],padel:['#5a5a66',0,1],muebles:['#7f6a55',1,1],estacion:['#9a9a9a',0,0]},
+    centro:{casa:['#d9c7a3',0,1],club:['#e7ecef',0,0],inmo:['#9fb8c9',0,1],ropa:['#b5543a',1,1],padel:['#1d1530',0,1],muebles:['#8a5a3c',1,1],estacion:['#c9c9c9',0,0]},
+    urba:{casa:['#f4efe6',0,0],club:['#eef2f3',0,0],coches:['#e9ecef',0,1],ropa:['#f1e6d6',0,1],padel:['#2a3d45',0,1],muebles:['#efe3d0',0,1],estacion:['#d7d7d7',0,0]},
+    lujo:{casa:['#fbfbfb',0,0],club:['#f5f5f5',0,0],inmo:['#f2efe9',0,1],ropa:['#e9e4dc',0,1],padel:['#0b2a3a',0,1],muebles:['#f4f1ea',0,1],estacion:['#e6e6e6',0,0]}},FAC=FACZ[ZN];
+  const zH=(id,z0)=>ZN==='bajo'?(id==='estacion'?3.6:z0>0?9.5:14):ZN==='urba'?(id==='estacion'?3.6:id==='club'?7:6):ZN==='lujo'?(id==='estacion'?3.6:id==='club'?7:z0>0?6.5:8.5):(id==='club'?7:id==='estacion'?5:z0>0?7.5:id==='inmo'?12:10);
   for(const b of BAR_BLDS){curB=b.id;const [x0,z0,x1,z1]=b.box,front=b.door[1]<z0?-1:b.door[1]>z1?1:0,side=b.id==='estacion',wv=x1-x0,dv=z1-z0;
-    const h=b.id==='club'?7:b.id==='estacion'?5:z0>0?7.5:b.id==='inmo'?12:10;const fl=Math.max(1,Math.round(h/3.2)),[fc,brick,shop]=FAC[b.id];
+    const h=zH(b.id,z0);const fl=Math.max(1,Math.round(h/3.2)),[fc,brick,shop]=FAC[b.id]||['#dddddd',0,1];
     if(b.id==='club'){ // pabellón deportivo: muro, chapa curvada y cristalera
       const wall=new T.MeshStandardMaterial({map:facadeTex('#e7ecef',1,6,0,0),roughness:0.7});box(x0,z0,x1,z1,0,h*0.6,wall,true);
       box(x0-0.3,z0-0.3,x1+0.3,z1+0.3,h*0.6,h*0.6+0.5,new T.MeshStandardMaterial({color:0x9aa4ad,metalness:0.6,roughness:0.4}),true);box(x0+1,z0+1,x1-1,z1-1,h*0.6+0.5,h*0.6+1.6,MS(0xc9d1d8,{roughness:0.6}),true);
       const gl=new T.Mesh(new T.PlaneGeometry(wv-2,2.6),new T.MeshPhysicalMaterial({color:0x89b4d0,metalness:0.2,roughness:0.05,transparent:true,opacity:0.75}));gl.position.set((x0+x1)/2,1.6,z1+0.02);add(gl,false);}
     else{const fm=new T.MeshStandardMaterial({map:facadeTex(fc,fl,Math.max(2,Math.round(wv/2.6)),brick,shop),roughness:0.85}),sm2=new T.MeshStandardMaterial({map:facadeTex(fc,fl,Math.max(2,Math.round(dv/2.6)),brick,0),roughness:0.85}),top=MS(new T.Color(fc).multiplyScalar(0.55),{roughness:0.9});
       const m=new T.Mesh(new T.BoxGeometry(wv,h,dv),[sm2,sm2,top,top,fm,fm]);m.position.set((x0+x1)/2,h/2,(z0+z1)/2);add(m,true);
-      box(x0-0.15,z0-0.15,x1+0.15,z1+0.15,h,h+0.35,MS(new T.Color(fc).multiplyScalar(0.8),{roughness:0.8}),true);   // cornisa
+      if(ZN==='urba'&&!side){const rg=new T.CylinderGeometry(1,1,wv+0.6,3,1);const rf=new T.Mesh(rg,MS(0xa23e2a,{roughness:0.85}));rf.rotation.z=Math.PI/2;rf.scale.set(1,dv*0.62,2.2);rf.position.set((x0+x1)/2,h+0.6,(z0+z1)/2);add(rf,true);}
+      else box(x0-0.15,z0-0.15,x1+0.15,z1+0.15,h,h+0.35,MS(new T.Color(fc).multiplyScalar(0.8),{roughness:0.8}),true);   // cornisa
+      if(ZN==='lujo'&&!side){const gl=new T.MeshPhysicalMaterial({color:0xcfe8ff,transparent:true,opacity:0.35,roughness:0.05,metalness:0.1});const fzz=front<0?z0-0.02:z1+0.02;
+        const glw=new T.Mesh(new T.PlaneGeometry(wv-1.2,h-1.6),gl);glw.position.set((x0+x1)/2,h/2+0.4,fzz+(front<0?-0.01:0.01));if(front<0)glw.rotation.y=Math.PI;add(glw,false);
+        box(x0,z0,x1,z1,h+0.35,h+1.2,new T.MeshPhysicalMaterial({color:0xcfe8ff,transparent:true,opacity:0.3,roughness:0.05}),false);}
+      if(ZN==='bajo'&&!side){const gt=cTex(512,128,(g,w,hh)=>{const cs=['#e63946','#f4d03f','#2ec4b6','#ff6fb5','#8338ec','#06d6a0'];for(let i=0;i<9;i++){g.fillStyle=cs[i%6];g.font=`bold ${40+Math.random()*40|0}px Impact,sans-serif`;g.save();g.translate(30+i*55,80+Math.random()*30);g.rotate((Math.random()-0.5)*0.5);g.fillText(['LOF','PÁDEL','SUR','BARRIO','★','OK','XV','ZZ','!!'][i],0,0);g.restore();}});
+        const gr=new T.Mesh(new T.PlaneGeometry(wv-1,1.6),new T.MeshStandardMaterial({map:gt,transparent:true,roughness:0.9}));gr.position.set((x0+x1)/2,1.0,(front<0?z0-0.05:z1+0.05));if(front<0)gr.rotation.y=Math.PI;sc.add(gr);
+        for(let f=1;f<fl;f+=2){const ln=new T.Mesh(new T.BoxGeometry(wv-2,0.02,0.02),MS(0x222222));ln.position.set((x0+x1)/2,f*3.2+1.8,front<0?z0-0.8:z1+0.8);sc.add(ln);
+          for(let k2=0;k2<5;k2++){const cl=new T.Mesh(new T.PlaneGeometry(0.5,0.6),new T.MeshStandardMaterial({color:['#e63946','#f1faee','#457b9d','#f4d03f','#2a9d8f'][k2],side:T.DoubleSide}));cl.position.set(x0+1.5+k2*(wv-3)/4,f*3.2+1.45,front<0?z0-0.8:z1+0.8);sc.add(cl);}}}
       if(!side)for(let f=1;f<fl;f++)box(x0+0.6,(front<0?z0-0.45:z1),x1-0.6,(front<0?z0:z1+0.45),f*3.2,f*3.2+0.1,MS(0x6c6f75,{metalness:0.5}),true);}   // balcones
     if(side){box(x0-1.6,z0-0.6,x0,z1+0.6,3.3,3.45,MS(0x5c6670,{metalness:0.6,roughness:0.4}),true);for(const zz of [z0,z1])box(x0-1.6,zz-0.08,x0-1.45,zz+0.08,0,3.3,MS(0x5c6670,{metalness:0.6}));}
     // puerta, toldo y rótulo
@@ -3352,10 +3397,11 @@ function buildBarrio3(){
   for(const b of BAR_BLDS){const [x0,z0,x1,z1]=b.box;blob((x0+x1)/2,(z0+z1)/2,x1-x0+2.4,z1-z0+2.4);
     if(b.id!=='club'&&b.id!=='estacion'){const hh=b.box[1]>0?7.5:b.id==='inmo'?12:10;for(let i=0;i<2;i++){const ac=new T.Mesh(new T.BoxGeometry(1.1,0.7,0.8),MS(0xb8bec4,{metalness:0.3,roughness:0.6}));ac.position.set(x0+1.5+i*2.2,hh+0.7,(z0+z1)/2+(i?1:-1));sc.add(ac);}}}
   BAR.aoM=aoM;BAR.aoBlob=blob;
+  zoneDecor(sc,ZN,blob);
   // ciudad de fondo: bloques altos alrededor del barrio
   const bgCols=['#c9b79c','#a7b4bf','#d4c4a8','#8f9ba6','#b8a48c','#cfd5d9'],bgM=bgCols.map((c,i)=>new T.MeshStandardMaterial({map:facadeTex(c,6,3,i%3===0,0),roughness:0.9}));let k=0;
-  for(let x=-66;x<=66;x+=11)for(const z of [-40,40]){const hh=12+((x*7+z)%5+5)%5*5;const m=new T.Mesh(new T.BoxGeometry(9,hh,9),bgM[k++%bgM.length]);m.position.set(x,hh/2,z+(z>0?4:-4));m.castShadow=false;m.receiveShadow=true;sc.add(m);}
-  for(let z=-28;z<=28;z+=11)for(const x of [-56,56]){const hh=14+((z*5+x)%4+4)%4*5;const m=new T.Mesh(new T.BoxGeometry(9,hh,9),bgM[k++%bgM.length]);m.position.set(x,hh/2,z);sc.add(m);}
+  if(ZN!=='urba'&&ZN!=='lujo')for(let x=-66;x<=66;x+=11)for(const z of [-40,40]){const hh=12+((x*7+z)%5+5)%5*5;const m=new T.Mesh(new T.BoxGeometry(9,hh,9),bgM[k++%bgM.length]);m.position.set(x,hh/2,z+(z>0?4:-4));m.castShadow=false;m.receiveShadow=true;sc.add(m);}
+  if(ZN!=='lujo')for(let z=-28;z<=28;z+=11)for(const x of [-56,56]){const hh=14+((z*5+x)%4+4)%4*5;const m=new T.Mesh(new T.BoxGeometry(9,hh,9),bgM[k++%bgM.length]);m.position.set(x,hh/2,z);sc.add(m);}
   // coches aparcados
   const carCols=[0xb3001b,0x1d3557,0xe0e0e0,0x222222,0x6c757d,0x2a9d8f,0xffb703];k=0;
   for(const [x,z,r] of [[-26,-4.4,Math.PI/2],[-17,-4.4,Math.PI/2],[6,-4.4,Math.PI/2],[17,-4.4,-Math.PI/2],[-25,4.4,-Math.PI/2],[9,4.4,Math.PI/2],[26,4.4,-Math.PI/2]]){const c=carMesh(carCols[k++%carCols.length]);c.position.set(x,0,z);c.rotation.y=r;sc.add(c);blob(x,z,Math.abs(Math.sin(r))>0.5?5:2.6,Math.abs(Math.sin(r))>0.5?2.6:5,0.02);}
@@ -3363,7 +3409,7 @@ function buildBarrio3(){
   // árboles más naturales (tronco + varias copas), bancos y farolas
   const spots=[];for(let x=-28;x<=28;x+=6.5)for(const z of [-21,21])spots.push([x+(Math.random()-0.5)*1.5,z+(Math.random()-0.5)]);
   for(const [x,z] of [[-10,-2.6],[10,-2.6],[-10,2.6],[10,2.6],[-31,-12],[-31,12],[31,12],[31,-12]])spots.push([x,z]);
-  const tg=new T.CylinderGeometry(0.14,0.22,2.2,8),lg=new T.IcosahedronGeometry(1,1),n=spots.length,tr=new T.InstancedMesh(tg,MS(0x5b4632,{roughness:1}),n),lv=new T.InstancedMesh(lg,MS(0x4a7d3a,{roughness:0.95}),n*3),mm=new T.Matrix4(),q=new T.Quaternion();
+  const tg=new T.CylinderGeometry(0.14,0.22,2.2,8),lg=ZN==='urba'?new T.ConeGeometry(1,2.2,9):ZN==='lujo'?new T.ConeGeometry(1.4,0.5,7):new T.IcosahedronGeometry(1,1),n=spots.length,tr=new T.InstancedMesh(tg,MS(0x5b4632,{roughness:1}),n),lv=new T.InstancedMesh(lg,MS(0x4a7d3a,{roughness:0.95}),n*3),mm=new T.Matrix4(),q=new T.Quaternion();
   spots.forEach(([x,z],i)=>{const s=0.9+Math.random()*0.5;mm.compose(new T.Vector3(x,1.1*s,z),q,new T.Vector3(s,s,s));tr.setMatrixAt(i,mm);
     for(let j=0;j<3;j++){const a=j*2.1+Math.random(),r=0.55*s;mm.compose(new T.Vector3(x+Math.cos(a)*r,(2.6+j*0.45)*s,z+Math.sin(a)*r),new T.Quaternion().setFromEuler(new T.Euler(Math.random(),Math.random(),0)),new T.Vector3(1.25*s,1.05*s,1.25*s));lv.setMatrixAt(i*3+j,mm);
       const col=new T.Color().setHSL(0.27+Math.random()*0.05,0.45,0.28+Math.random()*0.1);lv.setColorAt(i*3+j,col);}});
@@ -3399,7 +3445,7 @@ function cityNPCs(sc){const L=[],loop=(pts)=>pts.map(([x,z])=>({x,z}));
   L.push(npcMake(sc,looks[0],{x:-24,z:-5.5,route:loop([[-24,-5.5],[24,-5.5]]),speed:1.25}));
   L.push(npcMake(sc,looks[1],{x:22,z:5.5,route:loop([[22,5.5],[-22,5.5]]),speed:1.15}));
   L.push(npcMake(sc,looks[2],{x:-4,z:-3.5,route:loop([[-4,-3.5],[4,-3.5],[4,3.5],[-4,3.5]]),speed:1.0}));
-  if(CHARS.galan){const g=Object.assign({},CHARS.galan,{noRk:true,name:'',num:null,shirt:'#f2f2f2',shirt2:'#f2711c',pattern:''});
+  if(curZone()==='centro'&&CHARS.galan){const g=Object.assign({},CHARS.galan,{noRk:true,name:'',num:null,shirt:'#f2f2f2',shirt2:'#f2711c',pattern:''});
     L.push(npcMake(sc,g,{x:16,z:-5.5,route:loop([[16,-5.5],[0,-5.5],[0,5.5],[16,5.5]]),speed:1.2,label:'Ale Galán',sub:'jugador profesional'}));}
   return L;}
 
@@ -3439,11 +3485,28 @@ const CLOTH=[
   {id:'kit_ola',n:'Equipación Ola',p:220,cat:'pista',slot:'kit',set:{shirt:'#0077b6',shirt2:'#90e0ef',shorts:'#03045e',pattern:'diag'}},
   {id:'kit_fuego',n:'Equipación Fuego',p:220,cat:'pista',slot:'kit',set:{shirt:'#d62828',shirt2:'#fcbf49',shorts:'#1b1b1b',pattern:'stripes'}},
   {id:'kit_hielo',n:'Equipación Hielo',p:260,cat:'pista',slot:'kit',set:{shirt:'#f1faee',shirt2:'#a8dadc',shorts:'#457b9d',pattern:''}},
-  {id:'kit_noche',n:'Equipación Noche',p:300,cat:'pista',slot:'kit',set:{shirt:'#240046',shirt2:'#ff9e00',shorts:'#10002b',pattern:'diag'}}];
+  {id:'kit_noche',n:'Equipación Noche',p:300,cat:'pista',slot:'kit',set:{shirt:'#240046',shirt2:'#ff9e00',shorts:'#10002b',pattern:'diag'}},
+  {id:'tee_tie',n:'Camiseta tie-dye',p:35,cat:'calle',slot:'shirt',set:{shirt:'#ff6fb5',shirt2:'#39d3ff'}},
+  {id:'tee_vieja',n:'Camiseta gastada',p:15,cat:'calle',slot:'shirt',set:{shirt:'#a3a380',shirt2:'#8a8a6a'}},
+  {id:'polo_marino',n:'Polo marinero',p:160,cat:'calle',slot:'shirt',set:{shirt:'#f1faee',shirt2:'#1d3557'}},
+  {id:'camisa_lino',n:'Camisa de lino',p:240,cat:'calle',slot:'shirt',set:{shirt:'#f5ebe0',shirt2:'#e3d5ca'}},
+  {id:'chaqueta_lujo',n:'Chaqueta de diseño',p:900,cat:'calle',slot:'shirt',set:{shirt:'#0b090a',shirt2:'#d4af37'}},
+  {id:'pan_chandal',n:'Pantalón de chándal',p:25,cat:'calle',slot:'shorts',set:{shorts:'#2b2d42'}},
+  {id:'pan_blanco',n:'Bermuda blanca',p:120,cat:'calle',slot:'shorts',set:{shorts:'#f8f9fa'}},
+  {id:'pan_lujo',n:'Pantalón de sastre',p:380,cat:'calle',slot:'shorts',set:{shorts:'#22223b'}},
+  {id:'zap_lona',n:'Zapatillas de lona',p:30,cat:'calle',slot:'shoe',set:{shoe:'#e9ecef',shoeAcc:'#c1121f'}},
+  {id:'zap_nautico',n:'Náuticos',p:180,cat:'calle',slot:'shoe',set:{shoe:'#7f5539',shoeAcc:'#ede0d4'}},
+  {id:'zap_oro',n:'Zapatillas edición oro',p:650,cat:'calle',slot:'shoe',set:{shoe:'#ffffff',shoeAcc:'#d4af37'}},
+  {id:'gor_blanca',n:'Gorra blanca de club',p:80,cat:'calle',slot:'head',set:{acc:'cap',capCol:'#f8f9fa',capLogo:'#0b3d3a'}},
+  {id:'cinta_neg',n:'Cinta negra',p:20,cat:'calle',slot:'head',set:{acc:'headband',bandCol:'#151515'}},
+  {id:'kit_bela',n:'Equipación Bela Club',p:450,cat:'pista',slot:'kit',set:{shirt:'#0b3d3a',shirt2:'#d4af37',shorts:'#0b3d3a',pattern:''}},
+  {id:'kit_oro',n:'Equipación Oro',p:1200,cat:'pista',slot:'kit',set:{shirt:'#151515',shirt2:'#d4af37',shorts:'#151515',pattern:'stripes'}}];
 const ACCS=[{id:'grip_neg',n:'Overgrip negro',p:0,slot:'grip',set:{grip:'#262626'}},{id:'grip_bla',n:'Overgrip blanco',p:15,slot:'grip',set:{grip:'#f2f2f2'}},
   {id:'grip_ama',n:'Overgrip amarillo flúor',p:15,slot:'grip',set:{grip:'#d8ff3e'}},{id:'grip_ros',n:'Overgrip rosa',p:15,slot:'grip',set:{grip:'#ff6fb5'}},
   {id:'mun_bla',n:'Muñequera blanca',p:0,slot:'band',set:{band:'#ffffff'}},{id:'mun_neg',n:'Muñequera negra',p:20,slot:'band',set:{band:'#1b1b1b'}},
-  {id:'mun_lof',n:'Muñequera La Orden',p:25,slot:'band',set:{band:'#d8ff3e'}},{id:'mun_roj',n:'Muñequera roja',p:20,slot:'band',set:{band:'#c1121f'}}];
+  {id:'mun_lof',n:'Muñequera La Orden',p:25,slot:'band',set:{band:'#d8ff3e'}},{id:'mun_roj',n:'Muñequera roja',p:20,slot:'band',set:{band:'#c1121f'}},
+  {id:'grip_azu',n:'Overgrip azul',p:15,slot:'grip',set:{grip:'#1d5cc9'}},{id:'grip_oro',n:'Overgrip oro',p:120,slot:'grip',set:{grip:'#d4af37'}},
+  {id:'mun_azu',n:'Muñequera azul',p:20,slot:'band',set:{band:'#1d5cc9'}},{id:'mun_oro',n:'Muñequera oro',p:150,slot:'band',set:{band:'#d4af37'}}];
 // muebles: k = tipo de hueco (suelo grande, pared, pequeño)
 const FURN=[
   {id:'sofa',n:'Sofá',p:450,k:'suelo',c:'#3d5a80'},{id:'sofa_cuero',n:'Sofá de cuero',p:1400,k:'suelo',c:'#5c3d2e'},{id:'cama',n:'Cama',p:380,k:'suelo',c:'#e0e1dd'},
@@ -3452,14 +3515,39 @@ const FURN=[
   {id:'tv',n:'Televisión grande',p:700,k:'pared',c:'#111111'},{id:'cartas',n:'Estantería de cartas y figuras',p:420,k:'pared',c:'#6f4518'},{id:'cuadro',n:'Cuadro de pádel',p:120,k:'pared',c:'#1d5cc9'},
   {id:'poster',n:'Póster friki',p:60,k:'pared',c:'#e63946'},{id:'libreria',n:'Librería',p:260,k:'pared',c:'#8d5a32'},
   {id:'planta',n:'Planta',p:50,k:'peq',c:'#2d6a4f'},{id:'lampara',n:'Lámpara de pie',p:90,k:'peq',c:'#f1e3c6'},{id:'consola',n:'Consola de videojuegos',p:450,k:'peq',c:'#1b1b1b'},
-  {id:'puff',n:'Puf',p:70,k:'peq',c:'#ffb703'},{id:'alfombra',n:'Alfombra',p:110,k:'peq',c:'#bc4749'},{id:'trofeo',n:'Figura gigante',p:5000,k:'peq',c:'#d4af37'}];
+  {id:'puff',n:'Puf',p:70,k:'peq',c:'#ffb703'},{id:'alfombra',n:'Alfombra',p:110,k:'peq',c:'#bc4749'},{id:'trofeo',n:'Figura gigante',p:5000,k:'peq',c:'#d4af37'},
+  {id:'sofa_viejo',n:'Sofá de segunda mano',p:90,k:'suelo',c:'#8d6e63'},{id:'colchon',n:'Colchón en el suelo',p:40,k:'suelo',c:'#dddddd'},{id:'jacuzzi',n:'Jacuzzi',p:9000,k:'suelo',c:'#48cae4'},
+  {id:'piano',n:'Piano de cola',p:12000,k:'suelo',c:'#0b090a'},{id:'gimnasio',n:'Máquina de gimnasio',p:2400,k:'suelo',c:'#495057'},{id:'futbolin',n:'Futbolín',p:800,k:'suelo',c:'#2d6a4f'},
+  {id:'acuario',n:'Acuario',p:1500,k:'pared',c:'#0096c7'},{id:'tv_cine',n:'Pantalla de cine',p:4500,k:'pared',c:'#111111'},{id:'vitrina_cartas',n:'Vitrina de cartas raras',p:2500,k:'pared',c:'#3a1d5c'},
+  {id:'cuadro_arte',n:'Cuadro de arte moderno',p:6000,k:'pared',c:'#e63946'},{id:'escultura',n:'Escultura',p:7000,k:'peq',c:'#adb5bd'},{id:'robot',n:'Robot aspirador',p:300,k:'peq',c:'#222222'}];
 // viviendas: w×d de la habitación y huecos para muebles [tipo,x,z,giro]
 const HOMES=[
-  {id:'piso',n:'Piso de alquiler',p:0,w:7,d:6,wall:'#e9e3d5',floor:'#b08968',slots:[['suelo',-2,-1.6,0],['suelo',1.8,-1.4,0],['pared',0,-2.9,0],['peq',-2.8,1.6,0],['peq',2.6,1.8,0]]},
-  {id:'apart',n:'Apartamento',p:15000,w:10,d:8,wall:'#dfe7ec',floor:'#c9ada7',slots:[['suelo',-3,-2.4,0],['suelo',1,-2.4,0],['suelo',3.3,1.4,Math.PI/2],['pared',-2,-3.9,0],['pared',2.5,-3.9,0],['peq',-4.2,2.6,0],['peq',-4.2,0,0],['peq',4.2,-3.2,0]]},
-  {id:'casa',n:'Casa con jardín',p:60000,w:14,d:10,wall:'#f1e9da',floor:'#9c6644',slots:[['suelo',-5,-3.2,0],['suelo',-1,-3.2,0],['suelo',3.5,-3.2,0],['suelo',5,1.5,Math.PI/2],['suelo',-4.5,2,0],['pared',-3,-4.9,0],['pared',1.5,-4.9,0],['pared',5,-4.9,0],['peq',-6.2,4,0],['peq',-6.2,-0.5,0],['peq',6.2,4,0],['peq',0,3.5,0]]},
-  {id:'atico',n:'Ático de lujo',p:200000,w:18,d:12,wall:'#22223b',floor:'#e0e1dd',slots:[['suelo',-6,-4.2,0],['suelo',-2,-4.2,0],['suelo',2.5,-4.2,0],['suelo',6.5,-4.2,0],['suelo',7,1.5,Math.PI/2],['suelo',-6,2.5,0],['pared',-5,-5.9,0],['pared',0,-5.9,0],['pared',5,-5.9,0],['peq',-8.2,5,0],['peq',-8.2,0,0],['peq',8.2,5,0],['peq',0,4.5,0],['peq',3,4.5,0]]}];
-const OPEN_MAX=2;   // partidos abiertos por semana
+  {id:'piso',zone:'centro',n:'Piso de alquiler',p:0,w:7,d:6,wall:'#e9e3d5',floor:'#b08968',slots:[['suelo',-2,-1.6,0],['suelo',1.8,-1.4,0],['pared',0,-2.9,0],['peq',-2.8,1.6,0],['peq',2.6,1.8,0]]},
+  {id:'apart',zone:'centro',n:'Apartamento',p:15000,w:10,d:8,wall:'#dfe7ec',floor:'#c9ada7',slots:[['suelo',-3,-2.4,0],['suelo',1,-2.4,0],['suelo',3.3,1.4,Math.PI/2],['pared',-2,-3.9,0],['pared',2.5,-3.9,0],['peq',-4.2,2.6,0],['peq',-4.2,0,0],['peq',4.2,-3.2,0]]},
+  {id:'casa',zone:'urba',n:'Casa con jardín',p:60000,w:14,d:10,wall:'#f1e9da',floor:'#9c6644',slots:[['suelo',-5,-3.2,0],['suelo',-1,-3.2,0],['suelo',3.5,-3.2,0],['suelo',5,1.5,Math.PI/2],['suelo',-4.5,2,0],['pared',-3,-4.9,0],['pared',1.5,-4.9,0],['pared',5,-4.9,0],['peq',-6.2,4,0],['peq',-6.2,-0.5,0],['peq',6.2,4,0],['peq',0,3.5,0]]},
+  {id:'atico',zone:'lujo',n:'Ático de lujo',p:200000,w:18,d:12,wall:'#22223b',floor:'#e0e1dd',slots:[['suelo',-6,-4.2,0],['suelo',-2,-4.2,0],['suelo',2.5,-4.2,0],['suelo',6.5,-4.2,0],['suelo',7,1.5,Math.PI/2],['suelo',-6,2.5,0],['pared',-5,-5.9,0],['pared',0,-5.9,0],['pared',5,-5.9,0],['peq',-8.2,5,0],['peq',-8.2,0,0],['peq',8.2,5,0],['peq',0,4.5,0],['peq',3,4.5,0]]},
+  {id:'estudio',zone:'bajo',n:'Estudio en Barrio Sur',p:3000,w:6,d:5,wall:'#cfc6b8',floor:'#8d8d8d',slots:[['suelo',-1.6,-1.2,0],['pared',0,-2.4,0],['peq',2.2,1.4,0]]},
+  {id:'piso_sur',zone:'bajo',n:'Piso reformado',p:8000,w:8,d:6,wall:'#e3dccf',floor:'#a68a64',slots:[['suelo',-2.5,-1.6,0],['suelo',1.6,-1.6,0],['pared',0,-2.9,0],['peq',-3.2,1.8,0],['peq',3.2,1.8,0]]},
+  {id:'chalet',zone:'urba',n:'Chalet con piscina',p:110000,w:16,d:11,wall:'#f8f4ec',floor:'#d6ccc2',slots:[['suelo',-5.5,-3.6,0],['suelo',-1.5,-3.6,0],['suelo',3,-3.6,0],['suelo',6,1.5,Math.PI/2],['suelo',-5,2.2,0],['suelo',0,2.6,0],['pared',-4,-5.4,0],['pared',0.5,-5.4,0],['pared',5,-5.4,0],['peq',-7.2,4.4,0],['peq',-7.2,0,0],['peq',7.2,4.4,0],['peq',3,4.4,0]]},
+  {id:'villa',zone:'lujo',n:'Villa con pista de pádel',p:450000,w:22,d:14,wall:'#f1f1f1',floor:'#e9ecef',slots:[['suelo',-8,-5,0],['suelo',-4,-5,0],['suelo',0,-5,0],['suelo',4,-5,0],['suelo',8,-5,0],['suelo',9,1,Math.PI/2],['suelo',-8,2,0],['suelo',-3,2.5,0],['pared',-7,-6.9,0],['pared',-2,-6.9,0],['pared',3,-6.9,0],['pared',8,-6.9,0],['peq',-10.2,6,0],['peq',-10.2,0,0],['peq',10.2,6,0],['peq',0,6,0],['peq',4,6,0]]}];
+const OPEN_MAX=2;
+const CARS=[{id:'utilitario',n:'Utilitario de segunda mano',p:3000,c:0x9d0208},{id:'compacto',n:'Compacto',p:9000,c:0x1d3557},{id:'berlina',n:'Berlina',p:22000,c:0x6c757d},
+  {id:'suv',n:'SUV familiar',p:38000,c:0xe9ecef},{id:'deportivo',n:'Deportivo',p:90000,c:0xffb703},{id:'super',n:'Superdeportivo',p:250000,c:0xd00000}];
+const carBy=id=>CARS.find(c=>c.id===id)||null;
+const BUS_FARE=15;
+// zonas: mismo trazado de calles, edificios y tiendas distintas. tier: nivel de precios que se venden
+const ZPLOTS=[[-27,-17,-15,-7,-21,-6.7],[-9,-18,9,-7,0,-6.7],[15,-16,26,-7,20.5,-6.7],[-27,7,-15,16,-21,6.7],[-8,7,8,15,0,6.7],[15,7,26,16,20.5,6.7],[24.5,-3.5,29.5,3.5,24.2,0]];
+const ZONES={
+  bajo:{n:'Barrio Sur',sub:'barrio humilde',tier:0,club:'Pista municipal Barrio Sur',prize:0.6,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{ropa:'Mercadillo',padel:'Bazar deportivo',muebles:'Muebles de segunda mano',estacion:'Parada de bus'}},
+  centro:{n:'Centro',sub:'tu barrio de siempre',tier:1,club:'Bela Pádel Club',prize:1,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{padel:'La Orden del Friki – Pádel',estacion:'Estación'}},
+  urba:{n:'Urbanización Los Pinos',sub:'chalets y zonas verdes',tier:2,club:'Club Los Pinos',prize:1.3,ids:['casa','club','coches','ropa','padel','muebles','estacion'],names:{coches:'Concesionario',ropa:'Boutique deportiva',padel:'Pro Shop Los Pinos',muebles:'Hogar y Jardín',estacion:'Parada de bus'}},
+  lujo:{n:'Marina Real',sub:'zona de lujo junto al mar',tier:3,club:'Real Club Marina',prize:1.8,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{ropa:'Boutique de lujo',padel:'Marina Pro Pádel',muebles:'Diseño y Arte',estacion:'Parada de bus'}}};
+const ZBASE={casa:'Tu casa',club:'Club',inmo:'Inmobiliaria',ropa:'Ropa',padel:'Tienda de pádel',muebles:'Muebles',estacion:'Estación',coches:'Concesionario'};
+const ZCOL={casa:'#e9c46a',club:'#2a9d8f',inmo:'#8ecae6',ropa:'#f4a261',padel:'#3a1d5c',muebles:'#c08552',estacion:'#adb5bd',coches:'#495057'};
+function zoneBlds(z){const Z=ZONES[z]||ZONES.centro;return Z.ids.map((id,i)=>{const p=ZPLOTS[i];return {id,n:id==='club'?Z.club:(Z.names[id]||ZBASE[id]),box:[p[0],p[1],p[2],p[3]],door:[p[4],p[5]],col:ZCOL[id]};});}
+const curZone=()=>(CAR&&CAR.zone&&ZONES[CAR.zone])?CAR.zone:'centro';
+// precio máximo de lo que se vende en cada zona (las palas y muebles caros solo en zonas ricas)
+const TIERMAX={rk:[1800,8000,20000,1e9],furn:[450,1800,4500,1e9],cloth:[60,300,700,1e9]},TIERMIN={cloth:[0,0,0,90]};   // partidos abiertos por semana
 function carBarrioMigrate(){
   if(!CAR)return;
   if(!CAR.home||!CAR.home.owned)CAR.home={owned:['piso'],cur:'piso',slots:{}};
@@ -3469,6 +3557,7 @@ function carBarrioMigrate(){
   if(!Array.isArray(CAR.acc))CAR.acc=ACCS.filter(a=>a.p===0).map(a=>a.id);
   if(!CAR.outfit)CAR.outfit={shirt:'tee_blanca',shorts:'pan_vaquero',shoe:'zap_blanca',head:'cab_nada',kit:'kit_mio',grip:'grip_neg',band:'mun_bla'};
   if(!CAR.openWeek)CAR.openWeek={key:'',n:0};
+  if(!CAR.zone||!ZONES[CAR.zone])CAR.zone='centro';if(!Array.isArray(CAR.cars))CAR.cars=[];if(!CAR.reform)CAR.reform={};
 }
 const clothBy=id=>CLOTH.find(c=>c.id===id)||null,accBy=id=>ACCS.find(a=>a.id===id)||null,furnBy=id=>FURN.find(f=>f.id===id)||null,homeBy=id=>HOMES.find(h=>h.id===id)||HOMES[0];
 // tu jugador vestido de calle: sin pala ni nombre en la camiseta
@@ -3504,6 +3593,18 @@ function buildFurn(id){
     case 'consola':{bx(1.0,0.4,0.4,0,0.2,0,M('#6c757d'));bx(0.35,0.08,0.28,0,0.44,0,M(c));bx(0.14,0.03,0.08,0.3,0.42,0.08,M('#e63946'));break;}
     case 'puff':{cy(0.35,0.4,0,0.2,0,M(c,{roughness:0.95}),20);break;}
     case 'alfombra':{const r=new T.Mesh(new T.BoxGeometry(2.2,0.02,1.5),M(c,{roughness:1}));r.position.y=0.01;r.receiveShadow=true;g.add(r);bx(1.9,0.022,1.2,0,0.012,0,M('#f1e3c6',{roughness:1}));break;}
+    case 'sofa_viejo':{const m=M(c,{roughness:1});bx(1.9,0.4,0.85,0,0.22,0,m);bx(1.9,0.5,0.2,0,0.6,-0.32,m);bx(0.2,0.3,0.85,-0.85,0.5,0,m);bx(0.2,0.3,0.85,0.85,0.5,0,m);break;}
+    case 'colchon':{bx(1.4,0.2,1.95,0,0.1,0,M(c,{roughness:1}));bx(0.5,0.1,0.35,0,0.25,-0.7,M('#ffffff'));break;}
+    case 'jacuzzi':{cy(1.1,0.75,0,0.37,0,M('#f8f9fa',{roughness:0.3}),28);cy(0.98,0.05,0,0.72,0,new T.MeshPhysicalMaterial({color:c,roughness:0.05,clearcoat:1,transparent:true,opacity:0.85}),28);break;}
+    case 'piano':{bx(1.5,0.35,1.9,0,0.85,0,M(c,{roughness:0.15,metalness:0.2}));for(const [x,z] of [[-0.6,-0.8],[0.6,-0.8],[0,0.8]])bx(0.1,0.7,0.1,x,0.35,z,M(c));bx(1.4,0.05,0.25,0,1.0,0.95,M('#ffffff'));const lid=bx(1.45,0.04,1.8,0,1.35,-0.1,M(c,{roughness:0.15}));lid.rotation.x=-0.5;break;}
+    case 'gimnasio':{bx(1.6,0.08,0.6,0,0.04,0,M('#222'));bx(0.08,1.9,0.08,-0.7,0.95,0,M(c,{metalness:0.6}));bx(0.08,1.9,0.08,0.7,0.95,0,M(c,{metalness:0.6}));bx(1.5,0.06,0.06,0,1.9,0,M(c,{metalness:0.6}));bx(0.5,0.4,1.0,0,0.45,0.3,M('#111'));break;}
+    case 'futbolin':{bx(1.4,0.25,0.8,0,0.8,0,M(c));bx(1.3,0.02,0.7,0,0.93,0,M('#40916c'));for(let i=0;i<6;i++)bx(0.03,0.03,1.1,-0.55+i*0.22,0.98,0,M('#adb5bd',{metalness:0.8}));for(const [x,z] of [[-0.6,-0.3],[0.6,-0.3],[-0.6,0.3],[0.6,0.3]])bx(0.08,0.7,0.08,x,0.35,z,M('#5c3d2e'));break;}
+    case 'acuario':{bx(1.4,0.8,0.45,0,1.3,0,new T.MeshPhysicalMaterial({color:c,roughness:0.05,transparent:true,opacity:0.6,emissive:0x0077b6,emissiveIntensity:0.3}));bx(1.45,0.06,0.5,0,1.73,0,M('#111'));bx(1.4,0.9,0.45,0,0.45,0,M('#222'));break;}
+    case 'tv_cine':{bx(3,1.6,0.06,0,1.6,0,M(c,{roughness:0.2}));bx(2.9,1.5,0.01,0,1.6,0.035,new T.MeshStandardMaterial({color:0x101820,emissive:0x3a86ff,emissiveIntensity:0.35}));break;}
+    case 'vitrina_cartas':{bx(1.8,1.9,0.4,0,0.95,0,M(c));bx(1.7,1.8,0.02,0,0.95,0.21,new T.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:0.2,roughness:0.05}));const cs=['#e63946','#f4d03f','#2ec4b6','#ffffff','#d8ff3e'];for(let r=0;r<4;r++)for(let i=0;i<5;i++)bx(0.18,0.26,0.02,-0.6+i*0.3,0.4+r*0.45,0.12,new T.MeshStandardMaterial({color:cs[(i+r)%5],emissive:cs[(i+r)%5],emissiveIntensity:0.2}));break;}
+    case 'cuadro_arte':{bx(1.6,1.1,0.05,0,1.6,0,M('#d4af37',{metalness:0.8,roughness:0.3}));bx(1.45,0.95,0.01,0,1.6,0.03,new T.MeshStandardMaterial({map:cTex(128,96,(q,w,h)=>{const cs=['#e63946','#1d3557','#f4d03f','#2a9d8f','#ffffff'];for(let i=0;i<14;i++){q.fillStyle=cs[i%5];q.fillRect(Math.random()*w,Math.random()*h,10+Math.random()*50,8+Math.random()*40);}})}));break;}
+    case 'escultura':{cy(0.3,0.9,0,0.45,0,M('#f8f9fa'));const k=new T.Mesh(new T.TorusKnotGeometry(0.3,0.09,64,8),M(c,{metalness:0.9,roughness:0.2}));k.position.y=1.3;k.castShadow=true;g.add(k);break;}
+    case 'robot':{cy(0.17,0.08,0,0.04,0,M(c),20);cy(0.04,0.01,0.08,0.09,0,M('#39d3ff'),8);break;}
     case 'trofeo':{cy(0.35,0.3,0,0.15,0,M('#222'));const cup=new T.Mesh(new T.CylinderGeometry(0.4,0.15,0.6,24),M(c,{metalness:0.9,roughness:0.25}));cup.position.y=0.65;cup.castShadow=true;g.add(cup);cy(0.07,0.4,0,1.1,0,M(c,{metalness:0.9,roughness:0.25}));break;}
   }
   return g;
@@ -3561,7 +3662,11 @@ function buildInterior(id){
       p.position.set(-3.3+i*2.2,1.8,-3.95);sc.add(p);});
     D.solids.push(counterBox(sc,0,-0.5,2.6,0x495057));st(0,0.6,1.4,'🏠 Comprar o mudarte de casa','panel:inmo');
   }else if(id==='casa'){
-    const H=homeBy(CAR.home.cur);shop(H.w,H.d,new T.Color(H.wall).getHex(),new T.Color(H.floor).getHex());
+    const H=homeBy(CAR.home.cur),RF=CAR.reform[H.id]||{};let ftex=null;
+    if(RF.floor==='parquet'||RF.floor==='hormigon'){ftex=cityTex(RF.floor).clone();ftex.needsUpdate=true;ftex.repeat.set(H.w/2,H.d/2);}
+    else if(RF.floor==='marmol'){ftex=cTex(512,512,(g,w,h)=>{g.fillStyle='#f1f1ee';g.fillRect(0,0,w,h);g.strokeStyle='rgba(120,120,130,0.25)';for(let i=0;i<30;i++){g.lineWidth=Math.random()*2;g.beginPath();let x=Math.random()*w,y=Math.random()*h;g.moveTo(x,y);for(let k=0;k<6;k++){x+=(Math.random()-0.5)*80;y+=(Math.random()-0.5)*80;g.lineTo(x,y);}g.stroke();}g.strokeStyle='rgba(0,0,0,0.12)';g.strokeRect(0,0,w,h);});ftex.wrapS=ftex.wrapT=T.RepeatWrapping;ftex.repeat.set(H.w/2,H.d/2);}
+    const fcol=RF.floor==='moqueta'?'#6c757d':H.floor;
+    shop(H.w,H.d,new T.Color(RF.wall||H.wall).getHex(),new T.Color(fcol).getHex(),{floorTex:ftex});
     const slots=CAR.home.slots[H.id]||{};
     H.slots.forEach((s,i)=>{const fid=slots[i];if(!fid)return;const g=buildFurn(fid);g.position.set(s[1],0,s[2]+(s[0]==='pared'?0.2:0));g.rotation.y=s[3]||0;sc.add(g);
       if(s[0]==='suelo')D.solids.push([s[1]-1.1,s[2]-0.8,s[1]+1.1,s[2]+0.8]);});
@@ -3571,6 +3676,11 @@ function buildInterior(id){
     CAR.owned.forEach((rid,i)=>{const r=rkBy(rid),rk=mkRacket3(Object.assign({},CHARS[CAR.me]||{},r.kit),(c,o)=>MS(c,o));rk.position.set(H.w/2-0.06,1.2,-1.5+i*0.7);rk.rotation.y=-Math.PI/2;sc.add(rk);});
     wallSign(sc,'MI CASA',0,2.8,-H.d/2+0.02,0,2.2,'#ffffff','#1b263b');
     st(0,0,1.4,'🎨 Decorar la casa','panel:decorar');st(H.w/2-1.2,H.d/2-1.4,1.1,'👕 Armario','panel:armario');
+  }else if(id==='coches'){
+    shop(18,12,0xf1f3f5,0xdee2e6);wallSign(sc,'CONCESIONARIO',0,2.8,-5.95,0,4.5,'#1b263b','#ffffff');
+    CARS.slice(0,6).forEach((c,i)=>{const m=carMesh(c.c);const x=-6+(i%3)*6,z=-3+Math.floor(i/3)*4.5;m.position.set(x,0,z);m.rotation.y=0.5;sc.add(m);D.solids.push([x-1.6,z-2.3,x+1.6,z+2.3]);
+      const tag=new T.Mesh(new T.PlaneGeometry(2.4,0.4),new T.MeshBasicMaterial({map:signTex(c.n+' · '+eur(c.p),'#ffffff','#1b263b',512,80)}));tag.position.set(x,2.2,z);tag.rotation.y=0.0;sc.add(tag);});
+    D.solids.push(counterBox(sc,6.5,3.6,2.8,0x1b263b));st(6.5,4.6,1.3,'🚗 Comprar un coche','panel:coches');
   }else if(id==='club'){
     // Bela Pádel Club: pabellón cubierto con recepción, gradas, focos y dos pistas
     const W2=34,Z0=-23.5,Z1=9.5;sc.background=new T.Color(0x0b1020);sc.add(new T.HemisphereLight(0xffffff,0x40424a,0.9));
@@ -3594,18 +3704,18 @@ function buildInterior(id){
     // gradas a los lados
     const stM=MS(0x1d3557,{roughness:0.7});for(const x of [-15.2,15.2])for(let r=0;r<4;r++){const s=new T.Mesh(new T.BoxGeometry(1.0,0.45+r*0.45,18),stM);s.position.set(x+(x<0?-r*0.0:0)+(x<0?r*0.0:0),(0.45+r*0.45)/2,-12);s.scale.x=1-r*0.18;s.position.x=x+(x<0?-1:1)*r*0.42;s.castShadow=true;s.receiveShadow=true;sc.add(s);}
     D.solids.push([-17,-21,-14.6,-3],[14.6,-21,17,-3]);
-    wallSign(sc,'BELA PÁDEL CLUB',0,5.6,Z1-0.03,Math.PI,9,'#0b3d3a','#ffffff',true);
+    const CLN=ZONES[curZone()].club.toUpperCase();wallSign(sc,CLN,0,5.6,Z1-0.03,Math.PI,9,'#0b3d3a','#ffffff',true);
     wallSign(sc,'PISTA 1 · PARTIDOS ABIERTOS',-6.5,3.4,-2.06,0,4.6,'#ffffff','#1b263b');wallSign(sc,'PISTA 2 · ENTRENAMIENTO',6.5,3.4,-2.06,0,4.6,'#ffffff','#1b263b');
-    const ws=wallSign(sc,'BELA PÁDEL CLUB',0,3.0,0.99,0,4,'#0b3d3a','#ffffff',true);
+    const ws=wallSign(sc,CLN,0,3.0,0.99,0,4,'#0b3d3a','#ffffff',true);
     const back=new T.Mesh(new T.BoxGeometry(6,3,0.2),MS(0x0b3d3a));back.position.set(0,1.5,0.85);sc.add(back);D.solids.push([-3,0.7,3,1.0]);
     D.solids.push(counterBox(sc,0,2.6,3.6,0x2a9d8f));
     for(const x of [-12,12]){const b=new T.Mesh(new T.BoxGeometry(2.2,0.45,0.55),new T.MeshStandardMaterial({map:cityTex('parquet'),roughness:0.6}));b.position.set(x,0.22,6.5);b.castShadow=true;sc.add(b);D.solids.push([x-1.1,6.2,x+1.1,6.8]);}
     for(const [x,z] of [[-15.5,8.6],[15.5,8.6]]){const g=buildFurn('planta');g.position.set(x,0,z);sc.add(g);}
     D.bounds=[-16.6,-23,16.6,9.1];D.spawn={x:0,z:7.4,face:0};D.door={x:0,z:Z1};
     // gente: Fernando Belasteguín en recepción y dos profesionales calentando en la pista 1
-    D.npcs=[npcMake(sc,BELA,{x:0,z:1.7,face:Math.PI,mode:'idle',label:'Fernando Belasteguín',sub:'propietario del club'})];
-    for(const [k,x] of [['coello',-8.5],['tapia',-4.5]])if(CHARS[k])D.npcs.push(npcMake(sc,CHARS[k],{x,z:-18.5,face:Math.PI,mode:'ready',label:CHARS[k].full||CHARS[k].name}));
-    st(0,Z1-0.5,1.0,'🚪 Salir','exit');st(0,3.7,1.4,'💬 Hablar con Fernando Belasteguín','panel:club');
+    const ZC=curZone();D.npcs=ZC==='centro'?[npcMake(sc,BELA,{x:0,z:1.7,face:Math.PI,mode:'idle',label:'Fernando Belasteguín',sub:'propietario del club'})]:[npcMake(sc,Object.assign(crowdLook(7),{noRk:true}),{x:0,z:1.7,face:Math.PI,mode:'idle',label:'Recepción'})];
+    for(const [k,x] of ({centro:[['coello',-8.5],['tapia',-4.5]],urba:[['lebron',-8.5],['navarro',-4.5]],lujo:[['chingotto',-8.5],['dinenno',-4.5]],bajo:[]})[ZC]||[])if(CHARS[k])D.npcs.push(npcMake(sc,CHARS[k],{x,z:-18.5,face:Math.PI,mode:'ready',label:CHARS[k].full||CHARS[k].name}));
+    st(0,Z1-0.5,1.0,'🚪 Salir','exit');st(0,3.7,1.4,curZone()==='centro'?'💬 Hablar con Fernando Belasteguín':'💬 Recepción del club','panel:club');
     st(-6.5,-10,3.0,'🎾 Jugar partido abierto','open');st(6.5,-12,3.2,'🎯 Entrenar con la máquina','train');
   }
   return D;
@@ -3621,7 +3731,7 @@ function barPlayerModel(sc){const C=streetChar(),P=useHum()?mkHuman3(C,sc):mkPla
 function outdoorStations(){return BAR_BLDS.map(b=>({x:b.door[0],z:b.door[1],r:1.9,label:b.id==='estacion'?'🚉 Ir a los torneos':'🚪 Entrar: '+b.n,act:'enter:'+b.id}));}
 function barrioEnter(place){
   if(!CAR){buildCar();showScreen('car');return;}
-  carBarrioMigrate();showScreen('barrio');$('#barPanel').classList.remove('on');barHUD();
+  carBarrioMigrate();BAR_BLDS=zoneBlds(curZone());showScreen('barrio');$('#barPanel').classList.remove('on');barHUD();
   const three=barrioUse3D(),L=$('#barList');L.style.display=three?'none':'';document.body.classList.toggle('bar3',three);
   if(!three){L.innerHTML='<h2>El barrio</h2>'+BAR_BLDS.map(b=>`<button class="big" data-id="${b.id}">${esc(b.n)}</button>`).join('');return;}
   if(!BAR.scene){BAR.scene=buildBarrio3();BAR.cam=new THREE.PerspectiveCamera(55,CW/Math.max(1,CH),0.1,220);}
@@ -3633,7 +3743,8 @@ function barrioEnter(place){
 function barrioLeave(){BAR.on=false;BAR.path=[];BAR.dest=null;BAR.drag=null;BAR.joy={x:0,y:0};if(BAR.inD){npcDispose(BAR.inD.npcs);disposeScene3(BAR.inD.scene);}BAR.inD=null;BAR.mode='out';disposeBarrio3();document.body.classList.remove('bar3');$('#barAct').style.display='none';}
 function disposeScene3(sc){sc.traverse(o=>{if(o.geometry&&!Object.values(LATHE).includes(o.geometry))o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{for(const k of ['map','emissiveMap'])if(m[k])m[k].dispose();m.dispose();});}});}
 function enterPlace(id,direct){
-  if(id==='estacion'){barrioLeave();buildCar();showScreen('car');return;}
+  if(id==='estacion'){$('#barPanel').dataset.id='viajar';barRefresh('viajar');return;}
+  if(id==='casa'&&homeBy(CAR.home.cur).zone!==curZone()){barToast('No vives en esta zona: aquí puedes ver las casas en venta');$('#barPanel').dataset.id='inmo';barRefresh('inmo');return;}
   if(!BAR.on){barrioOpen(id);return;}
   const b=BAR_BLDS.find(x=>x.id===id);if(b&&!direct){BAR.out={x:b.door[0],z:b.door[1]+(b.door[1]<b.box[1]?-1.2:1.2),face:b.door[1]<b.box[1]?Math.PI:0};}
   else if(b)BAR.out={x:b.door[0],z:b.door[1]+(b.door[1]<b.box[1]?-1.2:1.2),face:b.door[1]<b.box[1]?Math.PI:0};
@@ -3646,7 +3757,8 @@ function exitPlace(){if(!BAR.inD)return;const D=BAR.inD;BAR.scene.add(BAR.P.g);B
 function barrioGo(id){const b=BAR_BLDS.find(x=>x.id===id);if(!b)return;if(!BAR.on){barrioOpen(id);return;}if(BAR.mode!=='out')exitPlace();
   BAR.dest=id;BAR.path=barrioPath(BAR.pos,{x:b.door[0],z:b.door[1]}).slice(1);}
 function barrioOpen(id){$('#barPanel').dataset.id=id;
-  if(id==='estacion'){barrioLeave();buildCar();showScreen('car');return;}
+  if(id==='estacion'){barRefresh('viajar');return;}
+  if(id==='casa'&&homeBy(CAR.home.cur).zone!==curZone()){barRefresh('inmo');return;}
   barRefresh(id==='casa'?'decorar':id);}
 function barAction(act){if(!act)return;
   if(act==='exit')exitPlace();else if(act.startsWith('enter:'))enterPlace(act.slice(6));
@@ -3659,7 +3771,7 @@ function groundY(x,z){if(BAR.inD)return 0;
   for(const xx of [-12,12])if(Math.abs(x-xx)<=1.3&&Math.abs(z)<=7.55)return 0.125;
   return Math.abs(z)<=7.2&&Math.abs(z)>=3.8||(x>13.6&&x<24.4&&Math.abs(z)<1.8)?0.01:0;}
 function barCollide(p,r){
-  const D=BAR.inD,solids=D?D.solids:BAR_BLDS.map(b=>b.box).concat(BAR.carBoxes||[]),bounds=D?D.bounds:[-29.5,-19.5,29.5,19.5];
+  const D=BAR.inD,solids=D?D.solids:BAR_BLDS.map(b=>b.box).concat(BAR.carBoxes||[]).concat(BAR.myCarBox?[BAR.myCarBox]:[]),bounds=D?D.bounds:[-29.5,-19.5,29.5,19.5];
   for(const N of (D?D.npcs:BAR.npcs)||[]){const dx=p.x-N.pos.x,dz=p.z-N.pos.z,d=Math.hypot(dx,dz),m=r+0.32;if(d<m&&d>1e-4){p.x=N.pos.x+dx/d*m;p.z=N.pos.z+dz/d*m;}}
   for(const s of solids){const cx=clamp(p.x,s[0],s[2]),cz=clamp(p.z,s[1],s[3]),dx=p.x-cx,dz=p.z-cz,d=Math.hypot(dx,dz);
     if(d<r){if(d>1e-6){p.x=cx+dx/d*r;p.z=cz+dz/d*r;}else{const l=[p.x-s[0],s[2]-p.x,p.z-s[1],s[3]-p.z],m=Math.min(...l);if(m===l[0])p.x=s[0]-r;else if(m===l[1])p.x=s[2]+r;else if(m===l[2])p.z=s[1]-r;else p.z=s[3]+r;}}}
@@ -3726,7 +3838,8 @@ const barCamEnd=e=>{if(e&&e.pointerId!=null)barPtr.delete(e.pointerId);if(barPtr
 $('#barZin').onclick=()=>{BAR.zoom=clamp((BAR.zoom||1)/1.25,0.6,3);};$('#barZout').onclick=()=>{BAR.zoom=clamp((BAR.zoom||1)*1.25,0.6,3);};
 $('#barAct').onclick=()=>{audioInit();if(BAR.near)barAction(BAR.near.act);};
 $('#barList').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b)barrioOpen(b.dataset.id);});
-$('#barTour').onclick=()=>{audioInit();enterPlace('estacion');};
+$('#barTour').onclick=()=>{audioInit();barrioLeave();buildCar();showScreen('car');};
+$('#barTravel').onclick=()=>{audioInit();barrioOpen('estacion');};
 $('#barCar').onclick=()=>{barrioLeave();buildCar();showScreen('car');};
 $('#barMenu').onclick=()=>{barrioLeave();showScreen('menu');};
 // ---- partidos abiertos y entrenamiento del club ----
@@ -3739,33 +3852,33 @@ function startOpenMatch(){
   barrioLeave();if(isTouch)tryFullscreen();
   newMatch({mode:'bots',open:true,club:true,chars:[CAR.me,CAR.mate,opp[0],opp[1]],ctrls:['human','ai','ai','ai'],me:0,diff:'normal',len:'quick',golden:true,outPlay:true});}
 function startClubTraining(){barrioLeave();if(isTouch)tryFullscreen();newMatch({mode:'training',club:true,chars:[CAR.me,'chilvi','galan','tapia'],ctrls:['human','none','machine','none'],me:0,diff:'normal',drill:TR.drill});}
-const openPrize=()=>Math.round((100+300*clamp((lvlOf(CAR.me)-0.88)/0.4,0,1))/10)*10;
+const openPrize=()=>Math.round((100+300*clamp((lvlOf(CAR.me)-0.88)/0.4,0,1))*(ZONES[curZone()].prize||1)/10)*10;
 
 // ---- paneles de las tiendas y de tu casa ----
 function barPanel(html){const p=$('#barPanel');p.innerHTML=`<button class="barX" data-x="close" aria-label="Cerrar">✕</button>${html}`;p.classList.add('on');}
 function barMoney(){return `<div class="barMoney">💶 ${eur(CAR.money)}</div>`;}
 const swatch=c=>`<span class="sw2" style="background:${c}"></span>`;
 function itemBtn(kind,id,name,price,owned,eq,cols){return `<button class="spb${eq?' on':''}${!owned&&CAR.money<price?' lock':''}" data-x="${kind}" data-id="${id}"><b>${esc(name)}</b> ${cols||''}<br>${eq?'✔ Lo llevas':owned?'Tuyo · pulsa para ponértelo':price?'Comprar por '+eur(price):'Gratis'}</button>`;}
-function barPadelHTML(){let h=`<h2>La Orden del Friki – Pádel</h2>${barMoney()}<div class="inf">Las palas mejoran tu juego. Los accesorios son solo estética.</div><div class="barGrid">`;
-  for(const r of RACKETS){const own=CAR.owned.includes(r.id),eq=CAR.rk===r.id,bon=Object.entries(r.b).map(([s,v])=>`+${Math.round(v/0.005)} ${STN[s].slice(0,3).toLowerCase()}.`).join(' '),can=CAR.money>=r.p;
+function barPadelHTML(){const tr0=ZONES[curZone()].tier;let h=`<h2>${esc(zoneBlds(curZone()).find(b=>b.id==='padel').n)}</h2>${barMoney()}<div class="inf">Las palas mejoran tu juego. Los accesorios son solo estética.${tr0<3?' Las palas más caras se venden en zonas más exclusivas.':''}</div><div class="barGrid">`;
+  const tr=ZONES[curZone()].tier;for(const r of RACKETS){const own=CAR.owned.includes(r.id),eq=CAR.rk===r.id,bon=Object.entries(r.b).map(([s,v])=>`+${Math.round(v/0.005)} ${STN[s].slice(0,3).toLowerCase()}.`).join(' '),can=CAR.money>=r.p;if(!own&&r.p>TIERMAX.rk[tr])continue;
     h+=`<button class="spb${eq?' on':''}${!own&&!can?' lock':''}" data-act="${own?'equip':'buy'}" data-id="${r.id}"><b>${esc(r.n)}</b>${swatch(r.kit.rk)}${swatch(r.kit.rk2)} ${bon}<br>${eq?'✔ La llevas':own?'Tuya · pulsa para usarla':'Comprar por '+eur(r.p)}</button>`;}
   h+='</div><h3>Accesorios</h3><div class="barGrid">';
   for(const a of ACCS){const own=CAR.acc.includes(a.id),eq=CAR.outfit[a.slot]===a.id;h+=itemBtn('acc',a.id,a.n,a.p,own,eq,swatch(Object.values(a.set)[0]));}
   return h+'</div>';}
 function barRopaHTML(onlyOwned){let h=`<h2>${onlyOwned?'Armario':'Ropa'}</h2>${barMoney()}<div class="inf">${onlyOwned?'Tu ropa comprada.':'Ropa de calle para el barrio y equipaciones para jugar.'} En los torneos, si tienes patrocinador de ropa, llevas la suya.</div>`;
   const groups=[['shirt','Camisetas (calle)'],['shorts','Pantalones (calle)'],['shoe','Zapatillas (calle)'],['head','Gorras (calle)'],['kit','Equipación para jugar']];
-  for(const [sl,tt] of groups){const items=CLOTH.filter(c=>c.slot===sl&&(!onlyOwned||CAR.wardrobe.includes(c.id)));if(!items.length)continue;h+=`<h3>${tt}</h3><div class="barGrid">`;
+  for(const [sl,tt] of groups){const tr=ZONES[curZone()].tier,items=CLOTH.filter(c=>c.slot===sl&&(onlyOwned?CAR.wardrobe.includes(c.id):(CAR.wardrobe.includes(c.id)||(c.p<=TIERMAX.cloth[tr]&&c.p>=TIERMIN.cloth[tr]))));if(!items.length)continue;h+=`<h3>${tt}</h3><div class="barGrid">`;
     for(const c of items){const v=c.set,cols=[v.shirt,v.shirt2,v.shorts,v.shoe,v.shoeAcc,v.capCol].filter(Boolean).slice(0,3).map(swatch).join('');h+=itemBtn('cloth',c.id,c.n,c.p,CAR.wardrobe.includes(c.id),CAR.outfit[sl]===c.id,cols);}
     h+='</div>';}
   return h;}
 function barMueblesHTML(){let h=`<h2>Muebles</h2>${barMoney()}<div class="inf">Lo que compres va a tu casa. Colócalo con "Decorar la casa".</div>`;
   for(const [k,tt] of [['suelo','Muebles grandes'],['pared','Para la pared'],['peq','Pequeños']]){h+=`<h3>${tt}</h3><div class="barGrid">`;
-    for(const f of FURN.filter(x=>x.k===k)){const n=CAR.furn[f.id]||0;h+=`<button class="spb${CAR.money<f.p?' lock':''}" data-x="furn" data-id="${f.id}"><b>${esc(f.n)}</b> ${swatch(f.c)}<br>Comprar por ${eur(f.p)}${n?` · tienes ${n}`:''}</button>`;}
+    for(const f of FURN.filter(x=>x.k===k&&x.p<=TIERMAX.furn[ZONES[curZone()].tier])){const n=CAR.furn[f.id]||0;h+=`<button class="spb${CAR.money<f.p?' lock':''}" data-x="furn" data-id="${f.id}"><b>${esc(f.n)}</b> ${swatch(f.c)}<br>Comprar por ${eur(f.p)}${n?` · tienes ${n}`:''}</button>`;}
     h+='</div>';}
   return h;}
-function barInmoHTML(){let h=`<h2>Inmobiliaria</h2>${barMoney()}<div class="inf">Las viviendas que compras son tuyas para siempre. Elige en cuál vives.</div><div class="barGrid">`;
-  for(const H of HOMES){const own=CAR.home.owned.includes(H.id),cur=CAR.home.cur===H.id;
-    h+=`<button class="spb${cur?' on':''}${!own&&CAR.money<H.p?' lock':''}" data-x="home" data-id="${H.id}"><b>${esc(H.n)}</b> · ${H.slots.length} huecos para muebles<br>${cur?'✔ Vives aquí':own?'Tuya · pulsa para mudarte':H.p?'Comprar por '+eur(H.p):'Gratis'}</button>`;}
+function barInmoHTML(){const z=curZone();let h=`<h2>Casas en ${esc(ZONES[z].n)}</h2>${barMoney()}<div class="inf">Las viviendas que compras son tuyas para siempre. Vives en: <b>${esc(homeBy(CAR.home.cur).n)}</b> (${esc(ZONES[homeBy(CAR.home.cur).zone].n)}).</div><div class="barGrid">`;
+  for(const H of HOMES.filter(h=>h.zone===z||CAR.home.owned.includes(h.id))){const own=CAR.home.owned.includes(H.id),cur=CAR.home.cur===H.id;
+    h+=`<button class="spb${cur?' on':''}${!own&&CAR.money<H.p?' lock':''}" data-x="home" data-id="${H.id}"><b>${esc(H.n)}</b> · ${esc(ZONES[H.zone].n)} · ${H.slots.length} huecos<br>${cur?'✔ Vives aquí':own?'Tuya · pulsa para mudarte':H.p?'Comprar por '+eur(H.p):'Gratis'}</button>`;}
   return h+'</div>';}
 const DECN={suelo:'Hueco grande',pared:'Pared',peq:'Rincón'};
 function barDecorarHTML(){const H=homeBy(CAR.home.cur),sl=CAR.home.slots[H.id]||{};
@@ -3773,22 +3886,42 @@ function barDecorarHTML(){const H=homeBy(CAR.home.cur),sl=CAR.home.slots[H.id]||
   const placed={};for(const k in sl)if(sl[k])placed[sl[k]]=(placed[sl[k]]||0)+1;
   H.slots.forEach((s,i)=>{const cur=sl[i]||'',opts=FURN.filter(f=>f.k===s[0]&&((CAR.furn[f.id]||0)-(placed[f.id]||0)>0||f.id===cur));
     h+=`<label class="decRow">${DECN[s[0]]} ${i+1}<select data-x="slot" data-i="${i}"><option value="">— vacío —</option>${opts.map(f=>`<option value="${f.id}"${f.id===cur?' selected':''}>${esc(f.n)}</option>`).join('')}</select></label>`;});
+  h+='</div><h3>Reformas</h3><div class="barGrid">';const r=CAR.reform[H.id]||{};
+  for(const [v,n,c,pr] of REF_WALL)h+=`<button class="spb${(r.wall||'')===v?' on':''}" data-x="ref" data-id="wall|${v}|${pr}"><b>Paredes: ${n}</b> <span class="sw2" style="background:${c}"></span><br>${(r.wall||'')===v?'✔ Puesto':pr?eur(pr):'Gratis'}</button>`;
+  for(const [v,n,pr] of REF_FLOOR)h+=`<button class="spb${(r.floor||'')===v?' on':''}" data-x="ref" data-id="floor|${v}|${pr}"><b>Suelo: ${n}</b><br>${(r.floor||'')===v?'✔ Puesto':pr?eur(pr):'Gratis'}</button>`;
   h+='</div><button class="big" data-x="armario">👕 Abrir el armario</button>';return h;}
+const REF_WALL=[['','Original','#eeeeee',0],['#fefae0','Crema','#fefae0',200],['#1d3557','Azul noche','#1d3557',350],['#2d6a4f','Verde bosque','#2d6a4f',350],['#3a1d5c','Morado friki','#3a1d5c',400],['#0b090a','Negro mate','#0b090a',600]];
+const REF_FLOOR=[['','Original',0],['parquet','Parquet',800],['marmol','Mármol',3000],['hormigon','Hormigón pulido',1200],['moqueta','Moqueta',500]];
 function barClubHTML(){const pr=coachPrice(),left=openLeft();
-  return `<h2>Bela Pádel Club</h2>${barMoney()}<div class="belaQ">💬 <b>Fernando Belasteguín:</b> «¡Bienvenido a mi club! Aquí puedes entrenar, mejorar con mi entrenador y jugar partidos abiertos con gente de tu nivel.»</div>
+  const zc=curZone();return `<h2>${esc(ZONES[zc].club)}</h2>${barMoney()}${zc==='centro'?'<div class="belaQ">💬 <b>Fernando Belasteguín:</b> «¡Bienvenido a mi club! Aquí puedes entrenar, mejorar con mi entrenador y jugar partidos abiertos con gente de tu nivel.»</div>':`<div class="inf">Los partidos abiertos de este club pagan ${Math.round(ZONES[zc].prize*100)} % del premio normal.</div>`}
     <button class="big" data-act="coach" ${CAR.money<pr?'disabled':''}>🏋️ Sesión con entrenador: +1 punto de mejora · ${eur(pr)}</button>
     <button class="big" data-x="open" ${left?'':'disabled'}>🎾 Partido abierto (te quedan ${left} esta semana · premio ${eur(openPrize())} si ganas)</button>
     <button class="big" data-x="train">🎯 Entrenar con la máquina</button>
     <div class="inf">También puedes ir andando a las pistas. Los puntos de mejora se reparten en la pantalla de Carrera.</div>`;}
 function barRefresh(id){const p=$('#barPanel');p.dataset.id=id;
-  const f={padel:barPadelHTML,ropa:()=>barRopaHTML(false),armario:()=>barRopaHTML(true),muebles:barMueblesHTML,inmo:barInmoHTML,decorar:barDecorarHTML,club:barClubHTML}[id];
+  const f={padel:barPadelHTML,ropa:()=>barRopaHTML(false),armario:()=>barRopaHTML(true),muebles:barMueblesHTML,inmo:barInmoHTML,decorar:barDecorarHTML,club:barClubHTML,viajar:barViajarHTML,coches:barCochesHTML}[id];
   if(f)barPanel(f());barHUD();}
+function barViajarHTML(){const z=curZone(),car=CAR.carCur&&carBy(CAR.carCur);
+  let h=`<h2>Viajar</h2>${barMoney()}<div class="inf">Estás en <b>${esc(ZONES[z].n)}</b>. ${car?'Vas en tu '+esc(car.n)+': gratis.':'Sin coche vas en autobús ('+eur(BUS_FARE)+'). Compra un coche en el concesionario de la Urbanización Los Pinos.'}</div>`;
+  h+=`<button class="big pri" data-x="torneos">🏆 Ir a los torneos</button><div class="barGrid">`;
+  for(const k of ['bajo','centro','urba','lujo']){const Z=ZONES[k];h+=`<button class="spb${k===z?' on':''}" data-x="zone" data-id="${k}"><b>${esc(Z.n)}</b> · ${esc(Z.sub)}<br>${k===z?'✔ Estás aquí':car?'Ir con tu coche':'Ir en autobús · '+eur(BUS_FARE)}</button>`;}
+  return h+'</div>';}
+function barTravel(z){if(!ZONES[z]||z===curZone())return false;const car=CAR.carCur&&carBy(CAR.carCur);
+  if(!car){if(CAR.money<BUS_FARE){barToast('No te llega para el autobús');return false;}CAR.money-=BUS_FARE;}
+  CAR.zone=z;saveCar();barrioLeave();BAR.pos={x:21.5,z:0};BAR.face=Math.PI/2;BAR.camYaw=Math.PI/2;BAR.inD=null;barrioEnter();barToast('Bienvenido a '+ZONES[z].n);return true;}
+function barCochesHTML(){let h=`<h2>Concesionario</h2>${barMoney()}<div class="inf">Con coche viajas gratis entre zonas y lo verás aparcado en la avenida.</div><div class="barGrid">`;
+  for(const c of CARS){const own=CAR.cars.includes(c.id),eq=CAR.carCur===c.id;h+=`<button class="spb${eq?' on':''}${!own&&CAR.money<c.p?' lock':''}" data-x="car" data-id="${c.id}"><b>${esc(c.n)}</b> <span class="sw2" style="background:#${c.c.toString(16).padStart(6,'0')}"></span><br>${eq?'✔ Es tu coche':own?'Tuyo · pulsa para usarlo':'Comprar por '+eur(c.p)}</button>`;}
+  return h+'</div>';}
 function carHome(){if(CAR)barrioEnter();else{buildCar();showScreen('car');}}
 function rebuildHomeIfInside(){if(BAR.on&&BAR.mode==='casa'){const pos={...BAR.pos},face=BAR.face;enterPlace('casa',true);BAR.pos=pos;BAR.face=face;}}
 $('#barPanel').addEventListener('click',e=>{const t=e.target.closest('[data-act],[data-x]');if(!t||!CAR||t.tagName==='SELECT')return;const p=$('#barPanel'),id=t.dataset.id,x=t.dataset.x;
   if(x==='close'){p.classList.remove('on');return;}
   if(x==='train'){startClubTraining();return;}if(x==='open'){startOpenMatch();return;}
   if(x==='armario'){barRefresh('armario');return;}
+  if(x==='torneos'){barrioLeave();buildCar();showScreen('car');return;}
+  if(x==='zone'){if(barTravel(id))return;}
+  else if(x==='car'){const c=carBy(id);if(!c)return;if(!CAR.cars.includes(id)){if(CAR.money<c.p){barToast('No te llega el dinero');return;}CAR.money-=c.p;CAR.cars.push(id);carNews(`🚗 Te compras: <b>${esc(c.n)}</b>.`);}CAR.carCur=id;saveCar();barToast('Tu coche: '+c.n);}
+  else if(x==='ref'){const [k,v,pr]=id.split('|'),H=homeBy(CAR.home.cur),r=CAR.reform[H.id]||(CAR.reform[H.id]={});if(r[k]!==v){if(CAR.money<+pr){barToast('No te llega el dinero');return;}CAR.money-=+pr;r[k]=v;saveCar();rebuildHomeIfInside();}}
   if(x==='cloth'){const c=clothBy(id);if(!c)return;if(!CAR.wardrobe.includes(id)){if(CAR.money<c.p){barToast('No te llega el dinero');return;}CAR.money-=c.p;CAR.wardrobe.push(id);carNews(`👕 Te compras: <b>${esc(c.n)}</b>.`);}
     CAR.outfit[c.slot]=id;if(c.slot==='kit')carApply();saveCar();}
   else if(x==='acc'){const a=accBy(id);if(!a)return;if(!CAR.acc.includes(id)){if(CAR.money<a.p){barToast('No te llega el dinero');return;}CAR.money-=a.p;CAR.acc.push(id);}CAR.outfit[a.slot]=id;carApply();saveCar();}
