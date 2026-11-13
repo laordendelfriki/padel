@@ -62,5 +62,31 @@ test('gráficos 2D: lista de lugares',async()=>withCar({opt:{gfx:'2d'}},async({p
   await page.waitForTimeout(300);assert(await visible(page,'#car'),'no abrió la carrera');
 }));
 
+test('tienda de pádel compra y equipa',async()=>withCar({},async({page})=>{
+  await page.evaluate(()=>{const P=window.__padel;P.CAR.money=1000;P.barrioEnter();P.barrioOpen('padel');});
+  await page.evaluate(()=>document.querySelector('#barPanel [data-act=buy][data-id=voltj]').click());
+  const r=await page.evaluate(()=>({m:window.__padel.CAR.money,rk:window.__padel.CAR.rk}));
+  assert(r.rk==='voltj'&&r.m===400,'resultado '+JSON.stringify(r));
+}));
+
+test('club: sesión con entrenador',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(()=>{const P=window.__padel;P.CAR.money=100000;const sp=P.CAR.sp,m=P.CAR.money;P.barrioEnter();P.barrioOpen('club');
+    const pr=P.coachPrice();document.querySelector('#barPanel [data-act=coach]').click();return {dsp:P.CAR.sp-sp,dm:m-P.CAR.money,pr};});
+  assert(r.dsp===1&&r.dm===r.pr,'resultado '+JSON.stringify(r));
+}));
+
+test('del barrio al partido: el barrio se libera',async()=>withCar({},async({page})=>{
+  await page.evaluate(()=>{window.__padel.barrioEnter();});await page.waitForTimeout(800);
+  await page.evaluate(()=>{const P=window.__padel;P.carNext();P.playUserMatch('car');});
+  await page.waitForTimeout(2500);
+  const r=await page.evaluate(()=>{const P=window.__padel;return {on:P.BAR.on,scene:!!P.BAR.scene,S:!!P.S,tri:P.G3.R.info.render.triangles};});
+  assert(!r.on&&!r.scene&&r.S&&r.tri>0,'resultado '+JSON.stringify(r));
+}));
+
+test('menú Carrera abre el barrio',async()=>withCar({},async({page})=>{
+  await page.evaluate(()=>document.querySelector('[data-go=car]').click());await page.waitForTimeout(500);
+  assert(await visible(page,'#barrio'),'no se abrió el barrio');
+}));
+
 module.exports={withCar};
 if(require.main===module)run();

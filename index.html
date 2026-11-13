@@ -31,6 +31,12 @@ canvas#c3{position:fixed;inset:0;display:none;width:100%;height:100%}body.g3 can
 #barPanel.on{display:flex;flex-direction:column;gap:8px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(10,16,30,.96);border:1px solid rgba(216,255,62,.3);border-radius:16px;padding:16px;max-width:560px;width:calc(100% - 32px);max-height:calc(100% - 90px);overflow:auto}
 #barToast{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:var(--acc);color:#0a1020;font-weight:800;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none!important}
 #barToast.on{opacity:1}
+#barPanel h2{margin:0;font-family:'Bebas Neue',Impact;letter-spacing:1px;font-size:26px;padding-right:36px}
+#barPanel .barX{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:0;background:#24304f;color:#fff;font-size:16px;cursor:pointer}
+#barPanel .barMoney{font-weight:800;color:var(--acc)}
+#barPanel .inf{font-size:12px;color:var(--mut)}
+#barPanel .barGrid{display:flex;flex-direction:column;gap:6px}
+#barPanel .big{min-width:0;font-size:14px;padding:10px 14px}
 .wrap{width:100%;max-width:880px;margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px}
 h1{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;letter-spacing:2px;margin:0;line-height:.95;text-align:center}
 .logo{font-size:clamp(46px,9vw,92px);color:var(--acc);text-shadow:0 4px 0 #6b7f12,0 10px 30px rgba(216,255,62,.25)}
@@ -550,6 +556,7 @@ function sfx(k){switch(k){
 let S=null, paused=false, lastOpts=null;
 function makePlayer(i,char,ctrl){return {i,team:i<2?0:1,char,ctrl,x:5,y:5,zone:i%2?0:1,buf:null,swing:null,swingId:0,anim:0,react:0,think:0,go:false,tgx:5,tgy:5,mx:0,my:0,moving:false};}
 function newMatch(o){
+  if(BAR.on||BAR.scene)barrioLeave();
   lastOpts=o;
   S={mode:o.mode,tour:o.tour||false,fx:[],diff:DIFF[o.diff||'normal'],len:o.len||'quick',golden:!!o.golden,drill:o.drill||'mixto',
     players:o.chars.map((c,i)=>makePlayer(i,c,o.ctrls[i])),me:o.me,
@@ -1856,7 +1863,7 @@ const fsTap=()=>{if(FSA.arm&&isTouch&&isLand()&&!fsEl()&&!FSA.manual)tryFullscre
 addEventListener('touchend',fsTap,{passive:true});addEventListener('pointerup',fsTap,{passive:true});addEventListener('click',fsTap,{passive:true});
 setTimeout(fsCheck,300);
 if('serviceWorker' in navigator&&location.protocol==='https:'&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{audioInit();const g=b.dataset.go;if(g==='setup')buildSetup();if(g==='tour')buildTour();if(g==='circ')buildCirc();if(g==='car')buildCar();if(g==='roster')buildRoster();if(g==='train')buildTrain();if(g==='online')buildOnline();showScreen(g);});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{audioInit();const g=b.dataset.go;if(g==='setup')buildSetup();if(g==='tour')buildTour();if(g==='circ')buildCirc();if(g==='car'){if(CAR){barrioEnter();return;}buildCar();}if(g==='roster')buildRoster();if(g==='train')buildTrain();if(g==='online')buildOnline();showScreen(g);});
 $('#bPlay').onclick=()=>{audioInit();store.set('set',SET);if(isTouch)tryFullscreen();
   newMatch({mode:'bots',chars:[SET.me,SET.mate,SET.riv[0],SET.riv[1]],ctrls:['human','ai','ai','ai'],me:0,diff:SET.diff,len:SET.len,golden:SET.golden,outPlay:SET.out!==false});};
 $('#bTrain').onclick=()=>{audioInit();store.set('tr',TR);if(isTouch)tryFullscreen();newMatch({mode:'training',chars:[TR.me,'chilvi','galan','tapia'],ctrls:['human','none','machine','none'],me:0,diff:'normal',drill:TR.drill});};
@@ -2091,14 +2098,14 @@ function boxHTML(C,m){
   return `<div class="mt${(m.a===0||m.b===0)?' me':''}">${rows}</div>`;
 }
 function showBracket(kind){
-  const C=TC(kind);if(!C||!(C.ev||C.last)){kind==='circ'?(buildCirc(),showScreen('circ')):kind==='car'?(buildCar(),showScreen('car')):(buildTour(),showScreen('tour'));return;}
+  const C=TC(kind);if(!C||!(C.ev||C.last)){kind==='circ'?(buildCirc(),showScreen('circ')):kind==='car'?carHome():(buildTour(),showScreen('tour'));return;}
   const ev=C.ev||C.last;
   $('#brSub').textContent=kind==='circ'?`Circuito · ${ev.cat==='Finals'?'Finals':ev.cat} · torneo ${Math.min(CIRC.idx+1,CAL.length)} de ${CAL.length}`:kind==='car'?`Carrera · temporada ${CAR.lastS||CAR.season} · ${ev.cat==='FIP'?'FIP Gold (cuadro previo)':ev.cat}`:'Modo torneo';
   $('#brTitle').textContent=ev.name;
   let html='';ev.R.forEach(rd=>{html+=`<div class="rnd"><h3>${RNAMES(rd.length)}</h3>${rd.map(m=>boxHTML(C,m)).join('')}</div>`;});
   if(ev.champ!=null&&ev.champ>=0)html+=`<div class="rnd"><div class="champ"><div class="tro">🏆</div>${esc(pairName(C.pairs[ev.champ]))}</div></div>`;
   $('#brBody').innerHTML=html;
-  const play=$('#brPlay'),back=$('#brBack'),simB=$('#brSim');back.textContent=kind==='circ'?'Circuito':kind==='car'?'Carrera':'Menú';back.onclick=()=>{if(kind==='circ'){buildCirc();showScreen('circ');}else if(kind==='car'){buildCar();showScreen('car');}else showScreen('menu');};
+  const play=$('#brPlay'),back=$('#brBack'),simB=$('#brSim');back.textContent=kind==='circ'?'Circuito':kind==='car'?'Carrera':'Menú';back.onclick=()=>{if(kind==='circ'){buildCirc();showScreen('circ');}else if(kind==='car'){carHome();}else showScreen('menu');};
   const um=C.ev?userMatch(C.ev):null;simB.style.display='none';
   if(um){const opp=C.pairs[um.m.a===0?um.m.b:um.m.a];
     $('#brNote').innerHTML=`${RNAMES(ev.R[um.r].length)}: <b>${esc(pairName(C.pairs[0]))}</b> contra <b>${esc(pairName(opp))}</b> · nivel ${DIFN[roundDiff(C)]}`+(kind==='car'?` · si lo simulas, ganas un ${Math.round(carWinP(C,um.m)*100)}% de las veces`:'');
@@ -2312,6 +2319,7 @@ function buildCar(){
   const me=CHARS[CAR.me],rk=carRanking(),r=rk.indexOf(CAR.me)+1,b=carBonus(),mate=CAR.mate,e=CAL[CAR.week];
   let h=`<div class="sub">Temporada ${CAR.season} · torneo ${CAR.week+1} de ${CAL.length}</div>`;
   h+=`<div class="kbig">${r===1?'👑 ':''}#${r} DEL RANKING · ${carPts(CAR.me)} PUNTOS</div><div class="kbig" style="font-size:24px;color:${CAR.money<0?'#ff8a8a':'#fff'}">💶 ${eur(CAR.money)}</div><div class="rivals">Mejor puesto: <b>#${CAR.best}</b> · ${CAR.wins} victorias, ${CAR.losses} derrotas · ${CAR.titles} títulos</div>`;
+  h+=`<div class="row" style="margin-bottom:8px"><button class="big pri" data-act="barrio" style="min-width:0;font-size:15px;padding:9px 18px">🏘️ Ir al barrio</button></div>`;
   h+=`<div class="kgrid"><div class="detail"><img src="${portraitURL(CAR.me)}" alt=""><div class="dt"><div class="nm">${esc(me.name)} <span class="tg">Tú</span></div>`;
   h+=`<div class="inf">Puntos de mejora: <b style="color:var(--acc)">${CAR.sp}</b>${CAR.sp?' · pulsa + para subir':' · se ganan venciendo partidos'}</div>`;
   for(const k of ['spd','pow','ctl'])h+=carStatRow(k,me[k],b[k],CAR.sp>0&&CAR.base[k]<CAR_MAX-1e-6);
@@ -2361,6 +2369,7 @@ function carAct(a,t){if(!CAR)return false;const k=t.dataset.k;
   else if(a==='coach'){const pr=coachPrice();if(CAR.money>=pr){CAR.money-=pr;CAR.coach=(CAR.coach||0)+1;CAR.sp++;carNews(`🏋️ Sesión con el entrenador (${eur(pr)}): +1 punto de mejora.`);saveCar();}}
   else if(a==='look'){openEditor(null,{car:true});return false;}
   else if(a==='menu'){showScreen('menu');return false;}
+  else if(a==='barrio'){barrioEnter();return false;}
   else if(a==='play'){audioInit();if(CAR.ev)showBracket('car');else carNext();return false;}
   else if(a==='quit'){if(t.dataset.ok){carUnregister();CAR=null;saveCar();carMatesOpen=false;}else{t.dataset.ok='1';t.textContent='¿Seguro? Se borra la carrera. Pulsa otra vez';return false;}}
   return true;}
@@ -3320,7 +3329,9 @@ function barrioGo(id){const b=BAR_BLDS.find(x=>x.id===id);if(!b)return;
 function barrioWalkTo(x,z){BAR.dest=null;BAR.path=barrioPath(BAR.pos,{x,z}).slice(1);$('#barTip').textContent='Toca un sitio para ir';}
 function barrioOpen(id){const b=BAR_BLDS.find(x=>x.id===id);if(!b)return;
   if(id==='estacion'){barrioLeave();buildCar();showScreen('car');return;}
-  barToast('Próximamente: '+b.n);}
+  $('#barPanel').dataset.id=id;
+  if(id==='padel'||id==='club')barRefresh(id);
+  else barPanel(`<h2>${esc(b.n)}</h2><div class="inf">🚧 Próximamente</div><div>${BAR_SOON[id]||''}</div>`);}
 function barrioTick(){
   if(!BAR.on||!BAR.P)return;const now=performance.now(),dt=Math.min(0.25,(now-(BAR.lt||now))/1000);BAR.lt=now;
   let sp=0;
@@ -3360,6 +3371,29 @@ $('#barList').addEventListener('click',e=>{const b=e.target.closest('button[data
 $('#barTour').onclick=()=>{audioInit();barrioOpen('estacion');};
 $('#barCar').onclick=()=>{barrioLeave();buildCar();showScreen('car');};
 $('#barMenu').onclick=()=>{barrioLeave();showScreen('menu');};
+
+// ---- sitios del barrio (fase 1): tienda de pádel, club y avisos de lo que viene ----
+const BAR_SOON={casa:'Aquí vivirás: empiezas en un piso de alquiler y podrás amueblarlo y decorarlo a tu gusto.',
+  inmo:'Compra un apartamento, una casa con jardín o un ático de lujo con lo que ganes en los torneos.',
+  muebles:'Sofás, camas, estanterías de cartas y figuras, consolas… todo para decorar tu casa.',
+  ropa:'Camisetas, pantalones, zapatillas, gorras y cintas para vestir a tu jugador.'};
+function barPanel(html){const p=$('#barPanel');p.innerHTML=`<button class="barX" data-x="close" aria-label="Cerrar">✕</button>${html}`;p.classList.add('on');}
+function barMoney(){return `<div class="barMoney">💶 ${eur(CAR.money)}</div>`;}
+function barPadelHTML(){let h=`<h2>La Orden del Friki – Pádel</h2>${barMoney()}<div class="inf">Palas para mejorar tu juego.</div><div class="barGrid">`;
+  for(const r of RACKETS){const own=CAR.owned.includes(r.id),eq=CAR.rk===r.id,bon=Object.entries(r.b).map(([s,v])=>`+${Math.round(v/0.005)} ${STN[s].slice(0,3).toLowerCase()}.`).join(' '),can=CAR.money>=r.p;
+    h+=`<button class="spb${eq?' on':''}${!own&&!can?' lock':''}" data-act="${own?'equip':'buy'}" data-id="${r.id}"><b>${esc(r.n)}</b><span class="sw2" style="background:${r.kit.rk}"></span><span class="sw2" style="background:${r.kit.rk2}"></span> ${bon}<br>${eq?'✔ La llevas':own?'Tuya · pulsa para usarla':'Comprar por '+eur(r.p)}</button>`;}
+  return h+'</div>';}
+function barClubHTML(){const pr=coachPrice();
+  return `<h2>Club</h2>${barMoney()}<div class="inf">Entrena para mejorar o ponte a punto con el entrenador.</div>
+    <button class="big" data-act="coach" ${CAR.money<pr?'disabled':''}>🏋️ Sesión con entrenador: +1 punto de mejora · ${eur(pr)}</button>
+    <button class="big" data-x="train">🎯 Entrenar con la máquina</button>
+    <div class="inf">Los puntos de mejora se reparten en la pantalla de Carrera.</div>`;}
+function barRefresh(id){if(id==='padel')barPanel(barPadelHTML());else if(id==='club')barPanel(barClubHTML());}
+function carHome(){if(CAR)barrioEnter();else{buildCar();showScreen('car');}}
+$('#barPanel').addEventListener('click',e=>{const t=e.target.closest('[data-act],[data-x]');if(!t||!CAR)return;const p=$('#barPanel');
+  if(t.dataset.x==='close'){p.classList.remove('on');return;}
+  if(t.dataset.x==='train'){barrioLeave();if(isTouch)tryFullscreen();newMatch({mode:'training',chars:[CAR.me,'chilvi','galan','tapia'],ctrls:['human','none','machine','none'],me:0,diff:'normal',drill:TR.drill});return;}
+  carAct(t.dataset.act,t);barRefresh(p.dataset.id);});
 
 /* ---------- cámara de televisión detrás de tu cristal ---------- */
 function fit3D(sway){
@@ -3428,7 +3462,7 @@ function frame(now){
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
-window.__padel={carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
+window.__padel={playUserMatch,coachPrice,carHome,carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,BAR_BLDS,barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>
