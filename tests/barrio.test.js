@@ -157,7 +157,7 @@ test('gente en la ciudad y Belasteguín en el club',async()=>withCar({},async({p
 }));
 
 test('viajar: autobús cobra, coche gratis y casas de cada zona',async()=>withCar({},async({page})=>{
-  const r=await page.evaluate(async()=>{const P=window.__padel,C=P.CAR,w=ms=>new Promise(r=>setTimeout(r,ms));C.money=200000;P.barrioEnter();await w(300);
+  const r=await page.evaluate(async()=>{const P=window.__padel,C=P.CAR,w=ms=>new Promise(r=>setTimeout(r,ms));C.money=200000;P.barrioEnter();await w(300);C.carCur=null;
     P.barrioOpen('estacion');document.querySelector('#barPanel [data-x=zone][data-id=urba]').click();await w(300);
     const bus=200000-C.money,zone1=C.zone,coches=P.BAR_BLDS.some(b=>b.id==='coches');
     P.barrioOpen('coches');document.querySelector('#barPanel [data-x=car][data-id=compacto]').click();const car=C.carCur,m1=C.money;
@@ -171,7 +171,7 @@ test('viajar: autobús cobra, coche gratis y casas de cada zona',async()=>withCa
 test('Barrio Sur solo vende lo barato',async()=>withCar({},async({page})=>{
   const r=await page.evaluate(async()=>{const P=window.__padel,C=P.CAR;C.money=999999;C.zone='bajo';P.barrioEnter();await new Promise(r=>setTimeout(r,300));
     P.barrioOpen('padel');const caras=[...document.querySelectorAll('#barPanel [data-act=buy]')].map(b=>b.dataset.id);
-    P.barrioOpen('muebles');const piano=!!document.querySelector('#barPanel [data-x=furn][data-id=piano]');return {caras,piano,name:P.BAR_BLDS.find(b=>b.id==='estacion').n};});
+    P.barrioOpen('muebles');const piano=!!document.querySelector('#barPanel [data-x=furn][data-id=piano]');return {caras,piano,name:P.BAR_BLDS.find(b=>b.id==='estacion'&&b.zone==='bajo').n};});
   assert(!r.caras.includes('titanb')&&!r.caras.includes('leyenda')&&!r.piano&&r.name==='Parada de bus','resultado '+JSON.stringify(r));
 }));
 
@@ -193,6 +193,21 @@ test('controles de PC: cambiar la tecla del remate y del movimiento',async()=>{
     assert(!g.errors.length,'errores: '+g.errors.join(' | '));
   }finally{await g.browser.close();}
 });
+
+test('mapa unido: andar de un barrio a otro, coche básico, conducir y autopista',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,C=P.CAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.barrioEnter();await w(800);
+    const basico=C.carCur==='basico'&&!!B.carObj;
+    // andar hacia el oeste por la calle norte hasta Barrio Sur
+    for(const n of B.npcs||[]){n.route=null;n.pos={x:0,z:70};}
+    B.pos={x:-28,z:-5.5};B.camYaw=Math.PI/2;B.joy={x:0,y:-1};for(let i=0;i<300&&C.zone!=='bajo';i++)await w(100);B.joy={x:0,y:0};const aPie=C.zone;
+    // subir al coche y conducir hacia el este
+    B.pos={x:B.carObj.position.x-1,z:B.carObj.position.z};P.barAction('drive');const conduce=!!B.drive;const x0=B.drive.x;
+    B.drive.yaw=Math.PI/2;B.joy={x:0,y:-1};await w(2500);B.joy={x:0,y:0};const avanza=B.drive.x-x0;
+    P.barAction('exit_car');const bajado=!B.drive&&B.P.g.visible;
+    const auto=P.BAR_BLDS&&true;P.barAction('highway');await w(300);const torneos=document.querySelector('#car').classList.contains('on');
+    return {basico,aPie,conduce,avanza,bajado,torneos};});
+  assert(r.basico&&r.aPie==='bajo'&&r.conduce&&r.avanza>1&&r.bajado&&r.torneos,'resultado '+JSON.stringify(r));
+}));
 
 module.exports={withCar};
 if(require.main===module)run();
