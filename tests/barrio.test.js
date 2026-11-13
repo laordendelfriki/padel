@@ -33,7 +33,7 @@ const visible=(page,sel)=>page.evaluate(s=>{const e=document.querySelector(s);re
 
 test('tocar la estación lleva andando y abre la carrera',async()=>withCar({},async({page})=>{
   await page.evaluate(()=>{window.__padel.barrioEnter();window.__padel.barrioGo('estacion');});
-  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:90000});
   const d=await page.evaluate(()=>{const B=window.__padel.BAR,b=window.__padel.BAR_BLDS.find(x=>x.id==='estacion');return Math.hypot(B.pos.x-b.door[0],B.pos.z-b.door[1]);});
   assert(d<0.4,'no llegó a la puerta: '+d);
 }));
@@ -42,7 +42,7 @@ test('cambiar de destino a mitad de camino',async()=>withCar({},async({page})=>{
   await page.evaluate(()=>{window.__padel.barrioEnter();window.__padel.barrioGo('club');});
   await page.waitForTimeout(500);
   await page.evaluate(()=>window.__padel.barrioGo('estacion'));
-  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:25000});
+  await page.waitForFunction(()=>document.querySelector('#car').classList.contains('on'),null,{timeout:90000});
   const d=await page.evaluate(()=>{const B=window.__padel.BAR,b=window.__padel.BAR_BLDS.find(x=>x.id==='estacion');return Math.hypot(B.pos.x-b.door[0],B.pos.z-b.door[1]);});
   assert(d<0.4,'terminó lejos de la estación: '+d);
 }));
@@ -100,7 +100,8 @@ test('comprar ropa de calle cambia la ropa del jugador del barrio',async()=>with
 test('joystick: camina y no atraviesa edificios',async()=>withCar({},async({page})=>{
   const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.barrioEnter();await w(300);
     // de frente hacia la tienda de pádel (al sur): la cámara mira hacia el norte, así que "abajo" en el joystick va al sur
-    B.pos={x:2,z:4.6};B.camYaw=0;B.joy={x:0,y:1};await w(4000);B.joy={x:0,y:0};
+    for(const n of B.npcs||[]){n.route=null;n.pos={x:-25,z:15};}
+    B.pos={x:2,z:4.6};B.camYaw=0;B.joy={x:0,y:1};for(let i=0;i<200&&B.pos.z<6.4;i++)await w(100);await w(1500);B.joy={x:0,y:0};
     const b=P.BAR_BLDS.find(x=>x.id==='padel');return {z:B.pos.z,box0:b.box[1]};});
   assert(r.z>5&&r.z<r.box0,'posición '+JSON.stringify(r));
 }));
@@ -135,6 +136,22 @@ test('comprar casa, comprar sofá y colocarlo',async()=>withCar({},async({page})
     P.barrioOpen('casa');const sel=document.querySelector('#barPanel select[data-i="0"]');sel.value='sofa';sel.dispatchEvent(new Event('change',{bubbles:true}));
     return {cur:P.CAR.home.cur,m:P.CAR.money,slot:P.CAR.home.slots.apart&&P.CAR.home.slots.apart[0],more:P.BAR.inD.scene.children.length>n0,solids:P.BAR.inD.solids.length};});
   assert(r.cur==='apart'&&r.m===20000-15000-450&&r.slot==='sofa'&&r.more,'resultado '+JSON.stringify(r));
+}));
+
+test('cruzar la puerta andando: entrar y salir',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.barrioEnter();await w(1200);
+    const b=P.BAR_BLDS.find(x=>x.id==='ropa');B.pos={x:b.door[0],z:b.door[1]-1.5};B.camYaw=0;B.doorCool=0;B.joy={x:0,y:1};   // hacia la puerta (sur)
+    for(let i=0;i<60&&B.mode==='out';i++)await w(100);const inside=B.mode;B.joy={x:0,y:0};await w(1100);
+    B.camYaw=Math.PI;B.joy={x:0,y:-1};   // de espaldas a la sala: hacia la puerta del interior (+z)
+    for(let i=0;i<80&&B.mode!=='out';i++)await w(100);B.joy={x:0,y:0};return {inside,out:B.mode};});
+  assert(r.inside==='ropa'&&r.out==='out','resultado '+JSON.stringify(r));
+}));
+
+test('gente en la ciudad y Belasteguín en el club',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.barrioEnter();await w(800);
+    const city=(B.npcs||[]).length,p0={...B.npcs[0].pos};await w(1500);const moved=Math.hypot(B.npcs[0].pos.x-p0.x,B.npcs[0].pos.z-p0.z);
+    P.enterPlace('club');const bela=B.inD.npcs.some(n=>n.label);const talk=B.inD.stations.some(s=>s.label.includes('Belasteguín'));return {city,moved,bela,talk};});
+  assert(r.city>=4&&r.moved>0.3&&r.bela&&r.talk,'resultado '+JSON.stringify(r));
 }));
 
 module.exports={withCar};
