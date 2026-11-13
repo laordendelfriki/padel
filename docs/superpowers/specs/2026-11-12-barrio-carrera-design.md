@@ -130,3 +130,10 @@ Estado: **aprobado** por Xavi el 12/11/2026.
 - El aspecto exacto de cada edificio y la distribución del barrio dentro de lo descrito.
 - El catálogo concreto de muebles, prendas y accesorios, y el ajuste fino de precios.
 - Cómo se calculan los caminos (red de puntos de paso u otra forma sencilla).
+
+## Cambio a la opción A (13/11/2026)
+Tras probar la C, Xavi pidió el estilo NBA 2K / The Grounds: **joystick en tercera persona** por el barrio, **entrar dentro** de cada sitio al estilo GTA y un **club con pistas** donde entras y juegas. Además, en el barrio tu jugador va **de calle, sin pala**. Se construyó todo de una vez:
+- Fuera: joystick (o WASD), cámara detrás que sigue al jugador, arrastrar para girar la cámara, choques con edificios y fuente, botón de acción junto a cada puerta.
+- Dentro: interiores 3D de La Orden del Friki – Pádel (palas y accesorios), Ropa (calle y equipaciones de juego, probador/armario), Muebles, Inmobiliaria (4 viviendas), Tu casa (huecos para muebles, vitrina de trofeos y palas en la pared) y Club (recepción, pista 1 de partidos abiertos, pista 2 de entrenamiento).
+- Partidos abiertos: máx. 2 por semana, premio 100–400 € si ganas, sin ranking; al terminar vuelves al club.
+- La equipación de juego comprada se usa en los partidos cuando no hay patrocinador de ropa.

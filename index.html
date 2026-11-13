@@ -3568,7 +3568,8 @@ function barrioTick(){
   else if(mag>0.08){if(kx||ky||BAR.joy.x||BAR.joy.y){BAR.path=[];BAR.dest=null;}const y=BAR.camYaw||0,fx=-Math.sin(y),fz=-Math.cos(y),rx=Math.cos(y),rz=-Math.sin(y);mx=(rx*jx-fx*jy);mz=(rz*jx-fz*jy);const l=Math.hypot(mx,mz)||1;mx/=l;mz/=l;}
   else mag=0;
   const sp=mag>0?(run?BAR_RUN:BAR_WALK)*(BAR.path.length?1:Math.max(0.35,mag)):0;
-  if(sp>0){const p={x:BAR.pos.x+mx*sp*dt,z:BAR.pos.z+mz*sp*dt};barCollide(p,0.38);BAR.pos=p;
+  let stp=sp*dt;if(BAR.path.length&&stp>0){const t=BAR.path[0],d=Math.hypot(t.x-BAR.pos.x,t.z-BAR.pos.z);if(stp>=d){stp=d;BAR.path.shift();if(!BAR.path.length&&BAR.dest){BAR.pos={x:t.x,z:t.z};const id=BAR.dest;BAR.dest=null;enterPlace(id);if(!BAR.on)return;}}}
+  if(sp>0){const p={x:BAR.pos.x+mx*stp,z:BAR.pos.z+mz*stp};barCollide(p,0.38);BAR.pos=p;
     const tf=Math.atan2(-mx,-mz);BAR.face+=Math.atan2(Math.sin(tf-BAR.face),Math.cos(tf-BAR.face))*Math.min(1,dt*12);
     if(!BAR.camDrag){const a=BAR.camYaw||0;BAR.camYaw=a+Math.atan2(Math.sin(BAR.face-a),Math.cos(BAR.face-a))*Math.min(1,dt*1.6);}
     BAR.gait=(BAR.gait+dt*sp*2.9)%(Math.PI*400);}
