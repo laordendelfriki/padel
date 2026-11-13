@@ -161,6 +161,12 @@ input.ci{font-family:'Bebas Neue',Impact;font-size:36px;letter-spacing:8px;text-
 .note{font-size:12px;color:var(--mut);max-width:560px;text-align:center;line-height:1.45}
 .err{color:#ff8a8a}
 .help{font-size:13px;line-height:1.55;color:#cfd9ee;max-width:640px}
+.sub2{color:var(--mut);font-size:13px;text-align:center;max-width:560px;margin:-4px auto 8px}
+#ctrlList{display:grid;grid-template-columns:1fr auto auto;gap:6px 8px;align-items:center;max-width:560px;width:100%;margin:0 auto}
+#ctrlList .cl{font-size:14px}
+#ctrlList button{min-width:96px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:#141d33;color:#fff;font-weight:700;cursor:pointer}
+#ctrlList button.wait{background:var(--acc);color:#0a1020;border-color:var(--acc)}
+#ctrlList button.dup{border-color:#ff6b6b}
 .help kbd{background:#24304f;border-radius:5px;padding:1px 6px;font-family:inherit;font-weight:700;font-size:12px;color:#fff}
 /* game HUD */
 #game{display:none}#game.on{display:block}
@@ -240,7 +246,7 @@ body.touch #keys{display:none}
     <button class="big" data-go="train"><span class="ic">🎯</span>Entrenamiento</button>
   </div>
   <div id="cloudBar" class="cloudbar"></div>
-  <button class="link" data-go="help">Cómo se juega</button>
+  <button class="link" data-go="help">Cómo se juega</button> · <button class="link" id="bCtrlMenu">Controles de PC</button>
 </div></div>
 
 <!-- NUBE: elegir partida -->
@@ -255,7 +261,7 @@ body.touch #keys{display:none}
   <h2>Cómo se juega</h2>
   <div class="panel help">
     <div><b>Móvil:</b> desliza el dedo en la mitad izquierda para moverte. A la derecha tienes los 4 golpes. Juega con el móvil en horizontal.</div>
-    <div><b>PC:</b> muévete con <kbd>WASD</kbd> o flechas. <kbd>J</kbd>/<kbd>Espacio</kbd> bandeja · <kbd>K</kbd> globo · <kbd>L</kbd> dejada · <kbd>I</kbd> remate · <kbd>Shift</kbd> sprint · <kbd>M</kbd> ¡mía! · <kbd>P</kbd> pausa.</div>
+    <div><b>PC:</b> muévete con <kbd>WASD</kbd> o flechas. <kbd>J</kbd>/<kbd>Espacio</kbd> bandeja · <kbd>K</kbd> globo · <kbd>L</kbd> dejada · <kbd>I</kbd> remate · <kbd>Shift</kbd> sprint · <kbd>M</kbd> ¡mía! · <kbd>P</kbd> pausa. Puedes cambiar todas las teclas (también usar el ratón) en <b>Controles de PC</b>, en el menú o en la pausa.</div>
     <div><b>Vista:</b> la cámara está detrás de tu cristal: arriba es hacia la red y tus rivales están al fondo.</div><div><b>Apuntar:</b> mientras golpeas, empuja a izquierda o derecha para mandar la bola a ese lado. Si no, tu jugador busca el hueco solo.</div>
     <div><b>Golpes:</b> <b>Bandeja</b> con bola alta: golpe cortado y controlado al fondo que bota bajo (con bola baja hace un drive, revés o volea normal) · <b>Globo</b> alto por encima de los de la red · <b>Dejada</b> corta, pegada a la red · <b>Remate</b> solo con bola alta (el botón brilla cuando toca). Un remate perfecto cerca de la red puede salir <b>por 3</b>.</div>
     <div><b>Normas:</b> saque por debajo y en diagonal al cuadro contrario, con dos oportunidades. La bola tiene que botar en el campo rival antes de tocar sus paredes. Después del bote puede rebotar en el cristal y seguir en juego. Dos botes, red o fuera es punto. Se cuenta 15-30-40-juego con ventaja (o punto de oro si lo activas) y tie-break en el empate a juegos.</div>
@@ -403,8 +409,17 @@ body.touch #keys{display:none}
   <button class="big pri" id="bResume">Seguir</button>
   <button class="big" id="bAssist">Ayuda de movimiento: Sí</button>
   <button class="big" id="bGfx">Gráficos: 3D</button>
+  <button class="big" id="bCtrl">⌨️ Controles de PC</button>
   <button class="big" id="bRestart">Reiniciar</button>
   <button class="big" id="bQuit">Salir al menú</button>
+</div></div>
+
+<!-- CONTROLES -->
+<div id="controls" class="screen"><div class="wrap">
+  <h2>Controles de PC</h2>
+  <div class="sub2">Pulsa en una tecla y luego la tecla o el botón del ratón que quieras. Cada acción admite dos teclas.</div>
+  <div id="ctrlList"></div>
+  <div class="row"><button class="big" id="bCtrlReset">Restablecer</button><button class="big pri" id="bCtrlBack">Listo</button></div>
 </div></div>
 
 <!-- END -->
@@ -1034,8 +1049,8 @@ function updateFacing(dt){
 /* ============ ENTRADA ============ */
 const keys={};const joy={id:null,cx:0,cy:0,x:0,y:0};
 function screenInput(){
-  let x=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
-  let y=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
+  let x=(kd('right')?1:0)-(kd('left')?1:0);
+  let y=(kd('down')?1:0)-(kd('up')?1:0);
   if(joy.id!==null){x=joy.x;y=joy.y;}
   return [x,y];
 }
@@ -1057,18 +1072,46 @@ function pressCall(){audioInit();if(!S||S.me<0||S.over||S.phase!=='rally')return
 function pressSprint(){audioInit();if(!S||S.me<0||S.over)return;const p=S.players[S.me],now=performance.now();if((p.sprCd||0)>now)return;p.sprT=now+650;p.sprCd=now+2600;sfx('emo');}
 const sprintK=p=>{const now=performance.now();return (p.sprT||0)>now?1.6:1;};
 function sendEmote(i){audioInit();$('#emopanel').classList.remove('on');if(!S||S.me<0||S.over)return;showEmote(S.players[S.me],i);if(S.mode==='online-guest'){NET.eseq=(NET.eseq||0)+1;NET.ei=i;}}
-const KEYSHOT={KeyJ:'bandeja',Space:'bandeja',KeyK:'globo',KeyL:'dejada',KeyI:'remate'};
+const CTRL_ACTS=[['up','Moverse arriba'],['down','Moverse abajo'],['left','Moverse a la izquierda'],['right','Moverse a la derecha'],
+  ['bandeja','Bandeja / golpe normal'],['globo','Globo'],['dejada','Dejada'],['remate','Remate'],['sprint','Sprint'],['mia','¡Mía!'],['pause','Pausa'],['use','Entrar / usar (barrio)']];
+const CTRL_DEF={up:['KeyW','ArrowUp'],down:['KeyS','ArrowDown'],left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],bandeja:['KeyJ','Space'],globo:['KeyK',''],dejada:['KeyL',''],remate:['KeyI',''],
+  sprint:['ShiftLeft','ShiftRight'],mia:['KeyM',''],pause:['KeyP','Escape'],use:['KeyE','Enter']};
+let CTRL=(()=>{const c=JSON.parse(JSON.stringify(CTRL_DEF));try{const sv=store.get('ctrl',null);if(sv)for(const k in c)if(Array.isArray(sv[k]))c[k]=[String(sv[k][0]||''),String(sv[k][1]||'')];}catch(e){}return c;})();
+const actOf=code=>{for(const k in CTRL)if(CTRL[k].includes(code))return k;return null;};
+const kd=a=>CTRL[a].some(c=>c&&keys[c]);
+let CTRL_WAIT=null,CTRL_FROM='menu';
+function buildCtrl(){const L=$('#ctrlList');let h='';const used={};for(const k in CTRL)for(const c of CTRL[k])if(c)used[c]=(used[c]||0)+1;
+  for(const [k,n] of CTRL_ACTS){h+=`<div class="cl">${esc(n)}</div>`;for(let i=0;i<2;i++){const c=CTRL[k][i],w=CTRL_WAIT&&CTRL_WAIT[0]===k&&CTRL_WAIT[1]===i;
+    h+=`<button data-k="${k}" data-i="${i}" class="${w?'wait':''}${c&&used[c]>1?' dup':''}">${w?'Pulsa una tecla…':esc(keyName(c))}</button>`;}}
+  L.innerHTML=h;}
+function ctrlAssign(code){if(!CTRL_WAIT)return;const [k,i]=CTRL_WAIT;CTRL_WAIT=null;
+  if(code!=='Escape'||k==='pause'){if(code==='Backspace')code='';
+    if(code)for(const a in CTRL)for(let j=0;j<2;j++)if(CTRL[a][j]===code&&!(a===k&&j===i))CTRL[a][j]='';   // una tecla solo hace una cosa
+    CTRL[k][i]=code;store.set('ctrl',CTRL);updKeyHints();}
+  buildCtrl();}
+function openCtrl(from){CTRL_FROM=from;CTRL_WAIT=null;buildCtrl();showScreen('controls');}
+function keyName(c){if(!c)return '—';const m={Space:'Espacio',ShiftLeft:'Shift izq.',ShiftRight:'Shift der.',ControlLeft:'Ctrl izq.',ControlRight:'Ctrl der.',AltLeft:'Alt izq.',AltRight:'Alt der.',Enter:'Intro',Escape:'Esc',Backspace:'Retroceso',Tab:'Tab',
+  ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',Mouse0:'Clic izq.',Mouse1:'Clic central',Mouse2:'Clic der.',CapsLock:'Bloq Mayús',Comma:',',Period:'.',Slash:'-',Semicolon:'Ñ',Quote:'´',BracketLeft:'`',BracketRight:'+',Backslash:'Ç',Minus:"'",Equal:'¡'};
+  if(m[c])return m[c];if(c.startsWith('Key'))return c.slice(3);if(c.startsWith('Digit'))return c.slice(5);if(c.startsWith('Numpad'))return 'Num '+c.slice(6);return c;}
+function ctrlHint(a){return CTRL[a].filter(Boolean).map(c=>`<kbd>${esc(keyName(c))}</kbd>`).join('/')||'<kbd>—</kbd>';}
+function updKeyHints(){const e=$('#keys');if(e)e.innerHTML=`${ctrlHint('up')}${ctrlHint('left')}${ctrlHint('down')}${ctrlHint('right')} mover · ${ctrlHint('bandeja')} bandeja · ${ctrlHint('globo')} globo · ${ctrlHint('dejada')} dejada · ${ctrlHint('remate')} remate · ${ctrlHint('pause')} pausa`;}
 addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT')return;
   {const dm=e.code.match(/^Digit(\d)$/);if(dm&&S){const n=+dm[1];if(!e.repeat)sendEmote(n===0?9:n-1);return;}}
-  if(KEYSHOT[e.code]){e.preventDefault();if(!e.repeat)pressShot(KEYSHOT[e.code]);return;}
-  if(e.code==='ShiftLeft'||e.code==='ShiftRight'){if(!e.repeat)pressSprint();}
-  if(e.code==='KeyM'){if(!e.repeat)pressCall();return;}
-  if(e.code==='KeyP'||e.code==='Escape'){if(S&&!S.over)togglePause();return;}
+  if(CTRL_WAIT){e.preventDefault();ctrlAssign(e.code);return;}
+  const act=actOf(e.code);
+  if(act==='bandeja'||act==='globo'||act==='dejada'||act==='remate'){if(S&&!paused){e.preventDefault();if(!e.repeat)pressShot(act);keys[e.code]=true;return;}}
+  if(act==='sprint'){if(!e.repeat)pressSprint();}
+  if(act==='mia'){if(!e.repeat)pressCall();return;}
+  if(act==='pause'){if(S&&!S.over)togglePause();return;}
+  if(act==='up'||act==='down'||act==='left'||act==='right'||e.code==='Space')e.preventDefault();
   if(e.code.startsWith('Arrow'))e.preventDefault();
   keys[e.code]=true;
 });
 addEventListener('keyup',e=>{keys[e.code]=false;});
+cv.addEventListener('mousedown',e=>{const code='Mouse'+e.button;if(CTRL_WAIT){e.preventDefault();ctrlAssign(code);return;}if(!S||paused||BAR.on)return;const act=actOf(code);
+  if(act==='bandeja'||act==='globo'||act==='dejada'||act==='remate'){e.preventDefault();pressShot(act);}else if(act==='sprint')pressSprint();else if(act==='mia')pressCall();});
+cv.addEventListener('contextmenu',e=>{if(S&&actOf('Mouse2'))e.preventDefault();});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 addEventListener('touchstart',()=>{if(!isTouch){isTouch=true;document.body.classList.add('touch');layout();}},{passive:true});
 const jz=$('#joyzone'),jEl=$('#joy'),kn=$('#knob');
@@ -1892,7 +1935,12 @@ const gfxLabel=()=>'Gráficos: '+(OPT.gfx==='2d'?'clásicos (2D)':(G3.failed?'3D
 $('#bGfx').onclick=()=>{OPT.gfx=OPT.gfx==='2d'?'3d':OPT.gfx==='3dl'?'2d':'3dl';store.set('opt',OPT);if(OPT.gfx!=='2d')load3D();if(OPT.gfx==='3d'&&G3.on)humLoad();$('#bGfx').textContent=gfxLabel();};
 $('#bAssist').onclick=()=>{OPT.assist=!OPT.assist;store.set('opt',OPT);$('#bAssist').textContent='Ayuda de movimiento: '+(OPT.assist?'Sí':'No');};$('#bResume').onclick=togglePause;
 $('#bRestart').onclick=()=>{if(lastOpts)newMatch(lastOpts);};
-$('#bQuit').onclick=quitToMenu;$('#bMenu2').onclick=quitToMenu;
+$('#bQuit').onclick=quitToMenu;
+$('#ctrlList').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(!b)return;CTRL_WAIT=[b.dataset.k,+b.dataset.i];buildCtrl();});
+$('#bCtrlReset').onclick=()=>{CTRL=JSON.parse(JSON.stringify(CTRL_DEF));store.set('ctrl',CTRL);CTRL_WAIT=null;updKeyHints();buildCtrl();};
+$('#bCtrlBack').onclick=()=>{CTRL_WAIT=null;showScreen(CTRL_FROM==='pause'?'pause':'menu');};
+$('#bCtrl').onclick=()=>openCtrl('pause');$('#bCtrlMenu').onclick=()=>openCtrl('menu');
+updKeyHints();$('#bMenu2').onclick=quitToMenu;
 $('#bAgain').onclick=()=>{if(S&&S.mode==='online-host'){const o=lastOpts;newMatch(o);}else if(lastOpts)newMatch(lastOpts);};
 $('#bSnd').textContent=sound?'🔊':'🔇';$('#bSnd').onclick=()=>{sound=!sound;store.set('snd',sound);$('#bSnd').textContent=sound?'🔊':'🔇';audioInit();};
 EMOS.forEach((em,i)=>{const b=document.createElement('button');b.className='eb';b.textContent=em;b.onclick=ev=>{ev.stopPropagation();sendEmote(i);};$('#emopanel').appendChild(b);});
@@ -3780,8 +3828,8 @@ function barCollide(p,r){
 function barrioTick(){
   if(!BAR.on||!BAR.P)return;const now=performance.now(),dt=Math.min(0.25,(now-(BAR.lt||now))/1000);BAR.lt=now;
   // entrada: joystick o teclado, relativa a la cámara; el piloto automático (barrioGo) manda si hay ruta
-  let jx=BAR.joy.x,jy=BAR.joy.y;const kx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),ky=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
-  if(kx||ky){jx=kx;jy=ky;}let mag=Math.min(1,Math.hypot(jx,jy)),run=mag>0.85||keys.ShiftLeft||keys.ShiftRight,mx=0,mz=0;
+  let jx=BAR.joy.x,jy=BAR.joy.y;const kx=(kd('right')?1:0)-(kd('left')?1:0),ky=(kd('down')?1:0)-(kd('up')?1:0);
+  if(kx||ky){jx=kx;jy=ky;}let mag=Math.min(1,Math.hypot(jx,jy)),run=mag>0.85||kd('sprint'),mx=0,mz=0;
   if(BAR.path.length&&!(kx||ky||BAR.joy.x||BAR.joy.y)){const t=BAR.path[0],dx=t.x-BAR.pos.x,dz=t.z-BAR.pos.z,d=Math.hypot(dx,dz);
     if(d<0.25){BAR.path.shift();if(!BAR.path.length&&BAR.dest){const id=BAR.dest;BAR.dest=null;enterPlace(id);if(!BAR.on)return;}}
     else{mx=dx/d;mz=dz/d;mag=1;run=true;}}
@@ -3809,7 +3857,7 @@ function barrioTick(){
   // sitio cercano: botón de acción
   const sts=BAR.inD?BAR.inD.stations:outdoorStations();let near=null,nd=1e9;for(const t of sts){const d=Math.hypot(t.x-BAR.pos.x,t.z-BAR.pos.z);if(d<t.r&&d<nd){nd=d;near=t;}}
   BAR.near=near;const ab=$('#barAct');if(near&&!$('#barPanel').classList.contains('on')){if(ab.dataset.act!==near.act){ab.dataset.act=near.act;ab.textContent=near.label+'  ▸';}ab.style.display='';}else ab.style.display='none';
-  if(keys.KeyE||keys.Enter){if(!BAR.eDown&&near&&!$('#barPanel').classList.contains('on'))barAction(near.act);BAR.eDown=true;}else BAR.eDown=false;
+  if(kd('use')){if(!BAR.eDown&&near&&!$('#barPanel').classList.contains('on'))barAction(near.act);BAR.eDown=true;}else BAR.eDown=false;
 }
 function barrioRender(){
   if(!$('#barrio').classList.contains('on')){barrioLeave();return false;}
@@ -4003,7 +4051,7 @@ function frame(now){
   render();requestAnimationFrame(frame);
 }
 resize();requestAnimationFrame(frame);load3D();
-window.__padel={cityNPCs,streetChar,enterPlace,exitPlace,barAction,startOpenMatch,openLeft,openPrize,quitToMenu,showEnd,CLOTH,FURN,HOMES,sigOf,playUserMatch,coachPrice,carHome,carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,get BAR_BLDS(){return BAR_BLDS;},barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
+window.__padel={get CTRL(){return CTRL;},openCtrl,cityNPCs,streetChar,enterPlace,exitPlace,barAction,startOpenMatch,openLeft,openPrize,quitToMenu,showEnd,CLOTH,FURN,HOMES,sigOf,playUserMatch,coachPrice,carHome,carAct,newCar,barrioEnter,barrioLeave,barrioGo,barrioOpen,get BAR_BLDS(){return BAR_BLDS;},barrioPath,buildBarrio3,disposeBarrio3,get BAR(){return BAR;},G3,TV:(x,y,z)=>TV(x,y,z),CHARS,keys:()=>CH_KEYS.slice(),portrait,portrait3,newMatch,get S(){return S;},afterUserMatch,showEnd,get CAR(){return CAR;},carNext};
 </script>
 </body>
 </html>

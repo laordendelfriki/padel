@@ -175,5 +175,24 @@ test('Barrio Sur solo vende lo barato',async()=>withCar({},async({page})=>{
   assert(!r.caras.includes('titanb')&&!r.caras.includes('leyenda')&&!r.piano&&r.name==='Parada de bus','resultado '+JSON.stringify(r));
 }));
 
+test('controles de PC: cambiar la tecla del remate y del movimiento',async()=>{
+  const g=await openGame({});
+  try{const {page}=g;
+    await page.evaluate(()=>{window.__padel.openCtrl('menu');document.querySelector('#ctrlList button[data-k=remate][data-i="0"]').click();});
+    await page.keyboard.press('KeyF');
+    await page.evaluate(()=>{document.querySelector('#ctrlList button[data-k=up][data-i="1"]').click();});
+    await page.keyboard.press('KeyI');   // I estaba en remate: debe quitarse de ahí
+    const c=await page.evaluate(()=>JSON.parse(JSON.stringify(window.__padel.CTRL)));
+    assert(c.remate[0]==='KeyF'&&c.up[1]==='KeyI'&&!c.remate.includes('KeyI'),'tabla '+JSON.stringify(c));
+    // en un partido: F golpea con remate
+    await page.evaluate(()=>{window.__padel.newMatch({mode:'bots',chars:['xavi','chilvi','galan','tapia'],ctrls:['human','ai','ai','ai'],me:0,diff:'normal',len:'quick',golden:true,outPlay:true});});
+    await page.waitForTimeout(500);await page.keyboard.press('KeyF');
+    const sw=await page.evaluate(()=>{const p=window.__padel.S.players[0];return (p.buf&&p.buf.type)||(p.swing&&p.swing.type);});
+    assert(sw==='remate','golpe '+sw);
+    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('padel_ctrl')).remate[0]);assert(saved==='KeyF','no se guardó');
+    assert(!g.errors.length,'errores: '+g.errors.join(' | '));
+  }finally{await g.browser.close();}
+});
+
 module.exports={withCar};
 if(require.main===module)run();
