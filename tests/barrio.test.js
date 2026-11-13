@@ -88,13 +88,53 @@ test('menú Carrera abre el barrio',async()=>withCar({},async({page})=>{
   assert(await visible(page,'#barrio'),'no se abrió el barrio');
 }));
 
-test('comprar pala cambia la pala del jugador del barrio',async()=>withCar({},async({page})=>{
+test('comprar ropa de calle cambia la ropa del jugador del barrio',async()=>withCar({},async({page})=>{
   await page.evaluate(()=>{const P=window.__padel;P.CAR.money=1000;P.barrioEnter();});await page.waitForTimeout(600);
-  const before=await page.evaluate(()=>window.__padel.BAR.P&&window.__padel.BAR.P.sigB);
-  await page.evaluate(()=>{window.__padel.barrioOpen('padel');document.querySelector('#barPanel [data-act=buy][data-id=voltj]').click();});
+  const before=await page.evaluate(()=>window.__padel.BAR.P.sigB);
+  await page.evaluate(()=>{window.__padel.barrioOpen('ropa');document.querySelector('#barPanel [data-x=cloth][data-id=tee_roja]').click();});
   await page.waitForTimeout(800);
-  const r=await page.evaluate(()=>{const P=window.__padel;return {sig:P.BAR.P&&P.BAR.P.sigB,want:P.sigOf(P.CHARS[P.CAR.me])};});
-  assert(before&&r.sig&&r.sig!==before&&r.sig.startsWith(r.want),'el jugador del barrio no se actualizó: '+JSON.stringify({before,...r}));
+  const r=await page.evaluate(()=>{const P=window.__padel;return {shirt:P.streetChar().shirt,rk:P.streetChar().noRk,sig:P.BAR.P.sigB,m:P.CAR.money};});
+  assert(r.shirt==='#c1121f'&&r.rk&&r.sig!==before&&r.m===960,'resultado '+JSON.stringify(r));
+}));
+
+test('joystick: camina y no atraviesa edificios',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.barrioEnter();await w(300);
+    // de frente hacia la tienda de pádel (al sur): la cámara mira hacia el norte, así que "abajo" en el joystick va al sur
+    B.pos={x:2,z:4.6};B.camYaw=0;B.joy={x:0,y:1};await w(4000);B.joy={x:0,y:0};
+    const b=P.BAR_BLDS.find(x=>x.id==='padel');return {z:B.pos.z,box0:b.box[1]};});
+  assert(r.z>5&&r.z<r.box0,'posición '+JSON.stringify(r));
+}));
+
+test('entrar en la tienda de pádel, comprar y salir',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));P.CAR.money=1000;P.barrioEnter();await w(300);
+    P.enterPlace('padel');const inside=B.mode;const st=B.inD.stations.find(s=>s.act==='panel:padel');B.pos={x:st.x,z:st.z};await w(400);
+    const btn=document.querySelector('#barAct');const shown=btn.style.display!=='none';btn.click();
+    document.querySelector('#barPanel [data-act=buy][data-id=voltj]').click();P.exitPlace();return {inside,shown,rk:P.CAR.rk,out:B.mode};});
+  assert(r.inside==='padel'&&r.shown&&r.rk==='voltj'&&r.out==='out','resultado '+JSON.stringify(r));
+}));
+
+test('club: pista 1 empieza un partido abierto y se vuelve al club',async()=>withCar({},async({page})=>{
+  await page.evaluate(async()=>{const P=window.__padel,B=P.BAR;P.barrioEnter();await new Promise(r=>setTimeout(r,300));P.enterPlace('club');P.barAction('open');});
+  await page.waitForTimeout(800);
+  const a=await page.evaluate(()=>{const P=window.__padel;return {open:P.S&&P.S.open,left:P.openLeft(),bar:P.BAR.on};});
+  assert(a.open&&a.left===1&&!a.bar,'al empezar '+JSON.stringify(a));
+  const r=await page.evaluate(async()=>{const P=window.__padel;const m0=P.CAR.money;P.S.over={winner:0};P.showEnd();const paid=P.CAR.money-m0;P.quitToMenu();await new Promise(r=>setTimeout(r,500));return {paid,prize:P.openPrize(),mode:P.BAR.mode,bar:P.BAR.on};});
+  assert(r.paid===r.prize&&r.mode==='club'&&r.bar,'al terminar '+JSON.stringify(r));
+}));
+
+test('máximo 2 partidos abiertos por semana',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(()=>{const P=window.__padel;P.CAR.openWeek={key:P.CAR.season+'-'+P.CAR.week,n:2};P.barrioEnter();P.enterPlace('club');P.barAction('open');return {S:!!P.S};});
+  assert(!r.S,'empezó un tercer partido');
+}));
+
+test('comprar casa, comprar sofá y colocarlo',async()=>withCar({},async({page})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,w=ms=>new Promise(r=>setTimeout(r,ms));P.CAR.money=20000;P.barrioEnter();await w(200);
+    P.barrioOpen('inmo');document.querySelector('#barPanel [data-x=home][data-id=apart]').click();
+    P.barrioOpen('muebles');document.querySelector('#barPanel [data-x=furn][data-id=sofa]').click();
+    P.enterPlace('casa');const n0=P.BAR.inD.scene.children.length;
+    P.barrioOpen('casa');const sel=document.querySelector('#barPanel select[data-i="0"]');sel.value='sofa';sel.dispatchEvent(new Event('change',{bubbles:true}));
+    return {cur:P.CAR.home.cur,m:P.CAR.money,slot:P.CAR.home.slots.apart&&P.CAR.home.slots.apart[0],more:P.BAR.inD.scene.children.length>n0,solids:P.BAR.inD.solids.length};});
+  assert(r.cur==='apart'&&r.m===20000-15000-450&&r.slot==='sofa'&&r.more,'resultado '+JSON.stringify(r));
 }));
 
 module.exports={withCar};
