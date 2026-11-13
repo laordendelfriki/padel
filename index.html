@@ -3303,7 +3303,7 @@ let BAR_BLDS=[
   {id:'estacion',n:'Estación',box:[24.5,-3.5,29.5,3.5],door:[24.2,0],col:'#adb5bd'}];
 const BAR={on:false,scene:null,cam:null,P:null,path:[],pos:{x:0,z:4.6},dest:null,face:0,gait:0,drag:null,camOff:{x:0,z:0}};
 // red de puntos de paso por calles y plaza (se calcula una vez; no depende del 3D)
-const DIST={centro:[0,0],bajo:[-72,0],urba:[72,0],lujo:[0,52]},DORDER=['centro','bajo','urba','lujo'];
+const DIST={centro:[0,0],bajo:[-72,0],urba:[72,0],valle:[-72,52],lujo:[0,52],finan:[72,52]},DORDER=['centro','bajo','urba','valle','lujo','finan'];
 let BAR_NET=null;
 function makeNet(){const nodes=[],edges=[],id={};const add=(k,x,z)=>{id[k]=nodes.length;nodes.push({x,z});};const link=(a,b)=>{if(id[a]!=null&&id[b]!=null)edges.push([id[a],id[b]]);};
   const xs=[-30,-21,-12,0,12,20.5,24,30];
@@ -3316,7 +3316,10 @@ function makeNet(){const nodes=[],edges=[],id={};const add=(k,x,z)=>{id[k]=nodes
     link(P+'M-12',P+'R1');link(P+'M-12',P+'R4');link(P+'M12',P+'R2');link(P+'M12',P+'R3');link(P+'M12',P+'M24');}
   // calles que unen los barrios y la carretera a Marina Real
   for(const r of ['N','S']){link('bajo_'+r+'30','centro_'+r+'-30');link('centro_'+r+'30','urba_'+r+'-30');}
-  add('V1',36,5.5);add('V2',36,46.5);link('centro_S30','V1');link('V1','V2');link('V2','lujo_N30');link('V1','urba_S-30');
+  for(const r of ['N','S']){link('valle_'+r+'30','lujo_'+r+'-30');link('lujo_'+r+'30','finan_'+r+'-30');}
+  for(const xc of [-36,36]){add('V'+xc+'a',xc,5.5);add('V'+xc+'b',xc,46.5);link('V'+xc+'a','V'+xc+'b');}
+  link('centro_S30','V36a');link('urba_S-30','V36a');link('V36b','lujo_N30');link('V36b','finan_N-30');
+  link('bajo_S30','V-36a');link('centro_S-30','V-36a');link('V-36b','valle_N30');link('V-36b','lujo_N-30');
   for(const b of BAR_BLDS){const zn=b.zone||'centro',P=zn+'_',lx=b.door[0]-(DIST[zn]||[0,0])[0];add('D'+b.key,b.door[0],b.door[1]);
     const near=b.id==='estacion'?P+'M24':P+(b.door[1]<(DIST[zn]||[0,0])[1]?'N':'S')+lx;link('D'+b.key,near);}
   return {nodes,edges};}
@@ -3373,14 +3376,14 @@ function carMesh(col){const T=THREE,g=new T.Group(),body=new T.MeshPhysicalMater
 // decorado propio de cada zona
 function zoneDecor(sc,ZN,blob){const T=THREE;
   if(ZN==='lujo'){ // mar con yates al sur y palmeras en el paseo
-    const sea=new T.Mesh(new T.PlaneGeometry(220,90),new T.MeshPhysicalMaterial({color:0x1a6ea8,roughness:0.08,metalness:0.2,clearcoat:1}));sea.rotation.x=-Math.PI/2;sea.position.set(0,0.02,67);sc.add(sea);
-    const sand=new T.Mesh(new T.PlaneGeometry(220,10),MS(0xe9d8a6,{roughness:1}));sand.rotation.x=-Math.PI/2;sand.position.set(0,0.015,25);sc.add(sand);
+    if(0){const sea=new T.Mesh(new T.PlaneGeometry(220,90),new T.MeshPhysicalMaterial({color:0x1a6ea8,roughness:0.08,metalness:0.2,clearcoat:1}));sea.rotation.x=-Math.PI/2;sea.position.set(0,0.02,67);sc.add(sea);
+    const sand=new T.Mesh(new T.PlaneGeometry(220,10),MS(0xe9d8a6,{roughness:1}));sand.rotation.x=-Math.PI/2;sand.position.set(0,0.015,25);sc.add(sand);}
     for(let i=0;i<5;i++){const y=new T.Group();const hull=new T.Mesh(new T.BoxGeometry(2.4,1.1,9),MS(0xf8f9fa,{roughness:0.3}));hull.position.y=0.5;y.add(hull);const cab=new T.Mesh(new T.BoxGeometry(1.8,1,4),MS(0x1b263b,{roughness:0.2,metalness:0.4}));cab.position.set(0,1.4,-0.5);y.add(cab);y.position.set(-30+i*15,0,38+(i%2)*8);y.rotation.y=0.3*(i%3-1);sc.add(y);}
     for(let x=-26;x<=26;x+=6.5){const tr=new T.Mesh(new T.CylinderGeometry(0.12,0.2,5,7),MS(0x8d6e4c));tr.position.set(x,2.5,9.4);sc.add(tr);for(let k=0;k<6;k++){const lf=new T.Mesh(new T.ConeGeometry(0.35,2.6,4),MS(0x2d6a4f,{roughness:0.9}));lf.position.set(x+Math.cos(k)*0.9,4.8,9.4+Math.sin(k)*0.9);lf.rotation.set(Math.sin(k)*1.2,0,Math.cos(k)*1.2);sc.add(lf);}blob(x,9.4,2.6,2.6,0.02);}
     if(0)for(let x=-60;x<=60;x+=12){const hh=4+((x*3)%3+3)%3*2;const v=new T.Mesh(new T.BoxGeometry(9,hh,8),MS(0xf8f9fa,{roughness:0.6}));v.position.set(x,hh/2,-40);sc.add(v);const gl=new T.Mesh(new T.BoxGeometry(8,hh*0.5,0.1),new T.MeshPhysicalMaterial({color:0x7fb7d9,roughness:0.05,metalness:0.3}));gl.position.set(x,hh*0.55,-35.9);sc.add(gl);}
     for(const [x,z] of [[-21,-11],[20.5,-11],[20.5,11.5]]){const pool=new T.Mesh(new T.BoxGeometry(5,0.05,2.5),new T.MeshPhysicalMaterial({color:0x48cae4,roughness:0.05,clearcoat:1}));pool.position.set(x,0.03,z>0?17.2:-18.6);sc.add(pool);}}
   else if(ZN==='urba'){ // chalets de fondo con tejado y setos
-    for(let x=-30;x<=30;x+=10)for(const z of [-31]){const g=new T.Group();const w2=new T.Mesh(new T.BoxGeometry(7,4,6),MS(0xf4efe6,{roughness:0.8}));w2.position.y=2;g.add(w2);const rf=new T.Mesh(new T.CylinderGeometry(1,1,7.4,3,1),MS(0xa23e2a,{roughness:0.85}));rf.rotation.z=Math.PI/2;rf.scale.set(1,3.6,2.4);rf.position.y=4.7;g.add(rf);g.position.set(x,0,z);sc.add(g);}
+    if(0)for(let x=-30;x<=30;x+=10)for(const z of [-31]){const g=new T.Group();const w2=new T.Mesh(new T.BoxGeometry(7,4,6),MS(0xf4efe6,{roughness:0.8}));w2.position.y=2;g.add(w2);const rf=new T.Mesh(new T.CylinderGeometry(1,1,7.4,3,1),MS(0xa23e2a,{roughness:0.85}));rf.rotation.z=Math.PI/2;rf.scale.set(1,3.6,2.4);rf.position.y=4.7;g.add(rf);g.position.set(x,0,z);sc.add(g);}
     const hedge=MS(0x355e3b,{roughness:1});for(const zz of [-19.3,19.3]){const h2=new T.Mesh(new T.BoxGeometry(56,1,0.8),hedge);h2.position.set(0,0.5,zz);sc.add(h2);}}
   else if(ZN==='bajo'){ // contenedores y una canasta en la plaza
     for(const [x,z,c] of [[-30,-9,0x2d6a4f],[-28.4,-9,0x1d3557],[28,9,0x6c584c]]){const ct=new T.Mesh(new T.BoxGeometry(1.4,1.3,1),MS(c,{roughness:0.8}));ct.position.set(x,0.65,z);sc.add(ct);}
@@ -3388,7 +3391,7 @@ function zoneDecor(sc,ZN,blob){const T=THREE;
     const hoop=new T.Mesh(new T.TorusGeometry(0.25,0.02,6,16),MS(0xe85d04));hoop.rotation.x=Math.PI/2;hoop.position.set(10,2.9,0);sc.add(hoop);}
   BAR.myCarBox=null;
 }
-function buildDistrict(sc,ZN,BL){
+function buildDistrict(sc,ZN,BL){const ZS=ZN==='valle'?'urba':ZN==='finan'?'lujo':ZN;
   const T=THREE;if(0){sc.background=skyTex();sc.fog=new T.Fog(0xcfdde8,45,120);cityEnv(sc);
   sc.add(new T.HemisphereLight(0xdfeeff,0x6f6a5a,0.85));{const gl=new T.Sprite(new T.SpriteMaterial({map:cTex(128,128,(g,w,h)=>{const gr=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);gr.addColorStop(0,'rgba(255,255,240,1)');gr.addColorStop(0.15,'rgba(255,245,210,0.9)');gr.addColorStop(1,'rgba(255,230,180,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}),blending:T.AdditiveBlending,depthWrite:false,fog:false}));gl.position.set(-70,60,-110);gl.scale.set(40,40,1);sc.add(gl);}
   const sun=new T.DirectionalLight(0xfff0d8,2.6);sun.position.set(-22,34,16);sun.target.position.set(0,0,0);sc.add(sun);sc.add(sun.target);
@@ -3410,22 +3413,22 @@ function buildDistrict(sc,ZN,BL){
     bajo:{casa:['#8e8172',1,0],club:['#b8b0a2',0,0],inmo:['#a39b8b',1,1],ropa:['#7d5a4f',1,1],padel:['#6b705c',1,1],muebles:['#8a7560',1,1],estacion:['#8f8f8f',0,0]},
     centro:{casa:['#d9c7a3',0,1],club:['#e7ecef',0,0],inmo:['#9fb8c9',0,1],ropa:['#b5543a',1,1],padel:['#1d1530',0,1],muebles:['#8a5a3c',1,1],estacion:['#c9c9c9',0,0]},
     urba:{casa:['#f6efe2',0,0],club:['#eef2f3',0,0],coches:['#e9ecef',0,1],ropa:['#f3e3cf',0,1],padel:['#e3efe6',0,1],muebles:['#f5e9d6',0,1],estacion:['#e2ddd3',0,0]},
-    lujo:{casa:['#fdfdfd',0,0],club:['#f7f7f7',0,0],inmo:['#f4f1ec',0,1],ropa:['#efeae2',0,1],padel:['#f8f9fa',0,1],muebles:['#f6f3ee',0,1],estacion:['#ececec',0,0]}},FAC=FACZ[ZN];
-  const zH=(id,z0)=>ZN==='bajo'?(id==='estacion'?3.6:z0>0?9.5:14):ZN==='urba'?(id==='estacion'?3.6:id==='club'?7:6):ZN==='lujo'?(id==='estacion'?3.6:id==='club'?7:z0>0?6.5:8.5):(id==='club'?7:id==='estacion'?5:z0>0?7.5:id==='inmo'?12:10);
+    lujo:{casa:['#fdfdfd',0,0],club:['#f7f7f7',0,0],inmo:['#f4f1ec',0,1],ropa:['#efeae2',0,1],padel:['#f8f9fa',0,1],muebles:['#f6f3ee',0,1],estacion:['#ececec',0,0]}},FAC=FACZ[ZS];
+  const zH=(id,z0)=>ZN==='finan'?(id==='estacion'?4:id==='club'?9:z0>0?24:32):ZN==='valle'?(id==='estacion'?3.4:id==='club'?6:4.5):ZS==='bajo'?(id==='estacion'?3.6:z0>0?9.5:14):ZS==='urba'?(id==='estacion'?3.6:id==='club'?7:6):ZS==='lujo'?(id==='estacion'?3.6:id==='club'?7:z0>0?6.5:8.5):(id==='club'?7:id==='estacion'?5:z0>0?7.5:id==='inmo'?12:10);
   for(const b of BL){curB=b.id;const [x0,z0,x1,z1]=b.box,front=b.door[1]<z0?-1:b.door[1]>z1?1:0,side=b.id==='estacion',wv=x1-x0,dv=z1-z0;
-    const h=zH(b.id,z0);b.h=h+(ZN==='urba'?2.4:0.4);const fl=Math.max(1,Math.round(h/3.2)),[fc,brick,shop]=FAC[b.id]||['#dddddd',0,1];
+    const h=zH(b.id,z0);b.h=h+(ZS==='urba'?2.4:0.4);const fl=Math.max(1,Math.round(h/3.2)),[fc,brick,shop]=FAC[b.id]||['#dddddd',0,1];
     if(b.id==='club'){ // pabellón deportivo: muro, chapa curvada y cristalera
       const wall=new T.MeshStandardMaterial({map:facadeTex('#e7ecef',1,6,0,0),roughness:0.7});box(x0,z0,x1,z1,0,h*0.6,wall,true);
       box(x0-0.3,z0-0.3,x1+0.3,z1+0.3,h*0.6,h*0.6+0.5,new T.MeshStandardMaterial({color:0x9aa4ad,metalness:0.6,roughness:0.4}),true);box(x0+1,z0+1,x1-1,z1-1,h*0.6+0.5,h*0.6+1.6,MS(0xc9d1d8,{roughness:0.6}),true);
       const gl=new T.Mesh(new T.PlaneGeometry(wv-2,2.6),new T.MeshPhysicalMaterial({color:0x89b4d0,metalness:0.2,roughness:0.05,transparent:true,opacity:0.75}));gl.position.set((x0+x1)/2,1.6,z1+0.02);add(gl,false);}
     else{const fm=new T.MeshStandardMaterial({map:facadeTex(fc,fl,Math.max(2,Math.round(wv/2.6)),brick,shop),roughness:0.85}),sm2=new T.MeshStandardMaterial({map:facadeTex(fc,fl,Math.max(2,Math.round(dv/2.6)),brick,0),roughness:0.85}),top=MS(new T.Color(fc).multiplyScalar(0.55),{roughness:0.9});
       const m=new T.Mesh(new T.BoxGeometry(wv,h,dv),[sm2,sm2,top,top,fm,fm]);m.position.set((x0+x1)/2,h/2,(z0+z1)/2);add(m,true);
-      if(ZN==='urba'&&!side){const sh=new T.Shape();sh.moveTo(-dv/2-0.4,0);sh.lineTo(dv/2+0.4,0);sh.lineTo(0,2.4);sh.closePath();const rg=new T.ExtrudeGeometry(sh,{depth:wv+0.6,bevelEnabled:false});rg.translate(0,0,-(wv+0.6)/2);const rf=new T.Mesh(rg,MS(0xa23e2a,{roughness:0.85}));rf.rotation.y=Math.PI/2;rf.position.set((x0+x1)/2,h,(z0+z1)/2);add(rf,true);}
+      if(ZS==='urba'&&!side){const sh=new T.Shape();sh.moveTo(-dv/2-0.4,0);sh.lineTo(dv/2+0.4,0);sh.lineTo(0,2.4);sh.closePath();const rg=new T.ExtrudeGeometry(sh,{depth:wv+0.6,bevelEnabled:false});rg.translate(0,0,-(wv+0.6)/2);const rf=new T.Mesh(rg,MS(0xa23e2a,{roughness:0.85}));rf.rotation.y=Math.PI/2;rf.position.set((x0+x1)/2,h,(z0+z1)/2);add(rf,true);}
       else box(x0-0.15,z0-0.15,x1+0.15,z1+0.15,h,h+0.35,MS(new T.Color(fc).multiplyScalar(0.8),{roughness:0.8}),true);   // cornisa
-      if(ZN==='lujo'&&!side){const gl=new T.MeshPhysicalMaterial({color:0xcfe8ff,transparent:true,opacity:0.35,roughness:0.05,metalness:0.1});const fzz=front<0?z0-0.02:z1+0.02;
+      if(ZS==='lujo'&&!side){const gl=new T.MeshPhysicalMaterial({color:0xcfe8ff,transparent:true,opacity:0.35,roughness:0.05,metalness:0.1});const fzz=front<0?z0-0.02:z1+0.02;
         const glw=new T.Mesh(new T.PlaneGeometry(wv-1.2,h-1.6),gl);glw.position.set((x0+x1)/2,h/2+0.4,fzz+(front<0?-0.01:0.01));if(front<0)glw.rotation.y=Math.PI;add(glw,false);
         box(x0,z0,x1,z1,h+0.35,h+1.2,new T.MeshPhysicalMaterial({color:0xcfe8ff,transparent:true,opacity:0.3,roughness:0.05}),false);}
-      if(ZN==='bajo'&&!side){const gt=cTex(512,128,(g,w,hh)=>{const cs=['#e63946','#f4d03f','#2ec4b6','#ff6fb5','#8338ec','#06d6a0'];for(let i=0;i<9;i++){g.fillStyle=cs[i%6];g.font=`bold ${40+Math.random()*40|0}px Impact,sans-serif`;g.save();g.translate(30+i*55,80+Math.random()*30);g.rotate((Math.random()-0.5)*0.5);g.fillText(['LOF','PÁDEL','SUR','BARRIO','★','OK','XV','ZZ','!!'][i],0,0);g.restore();}});
+      if(ZS==='bajo'&&!side){const gt=cTex(512,128,(g,w,hh)=>{const cs=['#e63946','#f4d03f','#2ec4b6','#ff6fb5','#8338ec','#06d6a0'];for(let i=0;i<9;i++){g.fillStyle=cs[i%6];g.font=`bold ${40+Math.random()*40|0}px Impact,sans-serif`;g.save();g.translate(30+i*55,80+Math.random()*30);g.rotate((Math.random()-0.5)*0.5);g.fillText(['LOF','PÁDEL','SUR','BARRIO','★','OK','XV','ZZ','!!'][i],0,0);g.restore();}});
         const gr=new T.Mesh(new T.PlaneGeometry(wv-1,1.6),new T.MeshStandardMaterial({map:gt,transparent:true,roughness:0.9}));gr.position.set((x0+x1)/2,1.0,(front<0?z0-0.05:z1+0.05));if(front<0)gr.rotation.y=Math.PI;sc.add(gr);
         for(let f=1;f<fl;f+=2){const ln=new T.Mesh(new T.BoxGeometry(wv-2,0.02,0.02),MS(0x222222));ln.position.set((x0+x1)/2,f*3.2+1.8,front<0?z0-0.8:z1+0.8);sc.add(ln);
           for(let k2=0;k2<5;k2++){const cl=new T.Mesh(new T.PlaneGeometry(0.5,0.6),new T.MeshStandardMaterial({color:['#e63946','#f1faee','#457b9d','#f4d03f','#2a9d8f'][k2],side:T.DoubleSide}));cl.position.set(x0+1.5+k2*(wv-3)/4,f*3.2+1.45,front<0?z0-0.8:z1+0.8);sc.add(cl);}}}
@@ -3434,9 +3437,9 @@ function buildDistrict(sc,ZN,BL){
     // puerta, toldo y rótulo
     const dz=side?0:(front<0?z0-0.04:z1+0.04),dx=side?x0-0.04:b.door[0];
     const door=new T.Mesh(new T.PlaneGeometry(1.4,2.4),new T.MeshPhysicalMaterial({color:0x2a2018,roughness:0.4,clearcoat:0.6}));door.position.set(dx,1.2,side?b.door[1]:dz);door.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);add(door,false);
-    if(!side&&b.id!=='club'){const aw=new T.Mesh(new T.BoxGeometry(2.6,0.08,1.2),new T.MeshStandardMaterial({color:ZN==='lujo'?0x1b263b:ZN==='urba'?0x2d6a4f:ZN==='bajo'?0x6c757d:(b.id==='padel'?0x6a3fb5:b.col),roughness:0.7}));aw.position.set(b.door[0],2.75,front<0?z0-0.6:z1+0.6);aw.rotation.x=front<0?-0.25:0.25;add(aw,true);}
-    const txt=b.id==='padel'&&ZN==='centro'?'LA ORDEN DEL FRIKI · PÁDEL':b.id==='estacion'?(ZN==='centro'?'ESTACIÓN · TORNEOS':'PARADA DE BUS · VIAJES'):b.n.toUpperCase();
-    const neon=(b.id==='padel'&&ZN==='centro')||b.id==='club',bg=b.id==='club'?'#0b3d3a':neon?'#140a24':'#ffffff',fg=b.id==='club'?'#ffffff':neon?'#d8ff3e':'#1b263b';
+    if(!side&&b.id!=='club'){const aw=new T.Mesh(new T.BoxGeometry(2.6,0.08,1.2),new T.MeshStandardMaterial({color:ZS==='lujo'?0x1b263b:ZS==='urba'?0x2d6a4f:ZS==='bajo'?0x6c757d:(b.id==='padel'?0x6a3fb5:b.col),roughness:0.7}));aw.position.set(b.door[0],2.75,front<0?z0-0.6:z1+0.6);aw.rotation.x=front<0?-0.25:0.25;add(aw,true);}
+    const txt=b.id==='padel'&&ZS==='centro'?'LA ORDEN DEL FRIKI · PÁDEL':b.id==='estacion'?(ZS==='centro'?'ESTACIÓN · TORNEOS':'PARADA DE BUS · VIAJES'):b.n.toUpperCase();
+    const neon=(b.id==='padel'&&ZS==='centro')||b.id==='club',bg=b.id==='club'?'#0b3d3a':neon?'#140a24':'#ffffff',fg=b.id==='club'?'#ffffff':neon?'#d8ff3e':'#1b263b';
     const sgw=side?4:Math.min(9,wv-1),sg=new T.Mesh(new T.PlaneGeometry(sgw,side?0.9:1.0),new T.MeshStandardMaterial({map:signTex(txt,bg,fg),emissive:neon?0xffffff:0,emissiveMap:neon?signTex(txt,bg,fg):null,emissiveIntensity:neon?0.85:0,roughness:0.5}));
     sg.position.set(side?x0-1.65:b.door[0],side?3.9:3.45,side?0:(front<0?z0-0.06:z1+0.06));sg.rotation.y=side?-Math.PI/2:(front<0?Math.PI:0);sg.userData.bld=b.id;sc.add(sg);
     if(b.id==='padel'){const sw=new T.Mesh(new T.PlaneGeometry(4.2,1.5),new T.MeshStandardMaterial({map:cTex(256,96,(g,w,hh)=>{g.fillStyle='#0d0718';g.fillRect(0,0,w,hh);const cs=['#e63946','#f4d03f','#2ec4b6','#ffffff','#6a3fb5','#d8ff3e'];for(let i=0;i<9;i++){g.fillStyle=cs[i%cs.length];g.fillRect(10+i*27,22+(i%2)*10,20,30);}}),emissive:0xffffff,emissiveIntensity:0.3,emissiveMap:null}));sw.position.set(-3.6,1.5,z0-0.05);sw.rotation.y=Math.PI;sc.add(sw);}
@@ -3449,16 +3452,13 @@ function buildDistrict(sc,ZN,BL){
   for(const b of BL){const [x0,z0,x1,z1]=b.box;blob((x0+x1)/2,(z0+z1)/2,x1-x0+2.4,z1-z0+2.4);
     if(b.id!=='club'&&b.id!=='estacion'){const hh=b.box[1]>0?7.5:b.id==='inmo'?12:10;for(let i=0;i<2;i++){const ac=new T.Mesh(new T.BoxGeometry(1.1,0.7,0.8),MS(0xb8bec4,{metalness:0.3,roughness:0.6}));ac.position.set(x0+1.5+i*2.2,hh+0.7,(z0+z1)/2+(i?1:-1));sc.add(ac);}}}
   BAR.aoM=aoM;BAR.aoBlob=blob;
-  zoneDecor(sc,ZN,blob);
+  zoneDecor(sc,ZS,blob);
   let k=0;
-  // coches aparcados
-  const carCols=[0xb3001b,0x1d3557,0xe0e0e0,0x222222,0x6c757d,0x2a9d8f,0xffb703];k=0;
-  for(const [x,z,r] of [[-26,-4.4,Math.PI/2],[-17,-4.4,Math.PI/2],[6,-4.4,Math.PI/2],[17,-4.4,-Math.PI/2],[-25,4.4,-Math.PI/2],[9,4.4,Math.PI/2],[26,4.4,-Math.PI/2]]){const c=carMesh(carCols[k++%carCols.length]);c.position.set(x,0,z);c.rotation.y=r;sc.add(c);blob(x,z,Math.abs(Math.sin(r))>0.5?5:2.6,Math.abs(Math.sin(r))>0.5?2.6:5,0.02);}
-  sc.userData.carBoxes=[[-28.1,-5.3,-23.9,-3.5],[-19.1,-5.3,-14.9,-3.5],[3.9,-5.3,8.1,-3.5],[14.9,-5.3,19.1,-3.5],[-27.1,3.5,-22.9,5.3],[6.9,3.5,11.1,5.3],[23.9,3.5,28.1,5.3]];
+  sc.userData.carBoxes=[];
   // árboles más naturales (tronco + varias copas), bancos y farolas
   const spots=[];for(let x=-28;x<=28;x+=6.5)for(const z of [-21,21])spots.push([x+(Math.random()-0.5)*1.5,z+(Math.random()-0.5)]);
   for(const [x,z] of [[-10,-2.6],[10,-2.6],[-10,2.6],[10,2.6],[-31,-12],[-31,12],[31,12],[31,-12]])spots.push([x,z]);
-  const tg=new T.CylinderGeometry(0.14,0.22,2.2,8),lg=ZN==='urba'?new T.ConeGeometry(1,2.2,9):ZN==='lujo'?new T.ConeGeometry(1.4,0.5,7):new T.IcosahedronGeometry(1,1),n=spots.length,tr=new T.InstancedMesh(tg,MS(0x5b4632,{roughness:1}),n),lv=new T.InstancedMesh(lg,MS(0x4a7d3a,{roughness:0.95}),n*3),mm=new T.Matrix4(),q=new T.Quaternion();
+  const tg=new T.CylinderGeometry(0.14,0.22,2.2,8),lg=ZS==='urba'?new T.ConeGeometry(1,2.2,9):ZS==='lujo'?new T.ConeGeometry(1.4,0.5,7):new T.IcosahedronGeometry(1,1),n=spots.length,tr=new T.InstancedMesh(tg,MS(0x5b4632,{roughness:1}),n),lv=new T.InstancedMesh(lg,MS(0x4a7d3a,{roughness:0.95}),n*3),mm=new T.Matrix4(),q=new T.Quaternion();
   spots.forEach(([x,z],i)=>{const s=0.9+Math.random()*0.5;mm.compose(new T.Vector3(x,1.1*s,z),q,new T.Vector3(s,s,s));tr.setMatrixAt(i,mm);
     for(let j=0;j<3;j++){const a=j*2.1+Math.random(),r=0.55*s;mm.compose(new T.Vector3(x+Math.cos(a)*r,(2.6+j*0.45)*s,z+Math.sin(a)*r),new T.Quaternion().setFromEuler(new T.Euler(Math.random(),Math.random(),0)),new T.Vector3(1.25*s,1.05*s,1.25*s));lv.setMatrixAt(i*3+j,mm);
       const col=new T.Color().setHSL(0.27+Math.random()*0.05,0.45,0.28+Math.random()*0.1);lv.setColorAt(i*3+j,col);}});
@@ -3494,7 +3494,7 @@ function cityNPCs(sc){const L=[],loop=(pts)=>pts.map(([x,z])=>({x,z}));
   L.push(npcMake(sc,looks[0],{x:-24,z:-5.5,route:loop([[-24,-5.5],[24,-5.5]]),speed:1.25}));
   L.push(npcMake(sc,looks[1],{x:22,z:5.5,route:loop([[22,5.5],[-22,5.5]]),speed:1.15}));
   L.push(npcMake(sc,looks[2],{x:-4,z:-3.5,route:loop([[-4,-3.5],[4,-3.5],[4,3.5],[-4,3.5]]),speed:1.0}));
-  for(const [zn,i] of [['bajo',9],['urba',10],['lujo',11]]){const [ox,oz]=DIST[zn];L.push(npcMake(sc,Object.assign(crowdLook(i),{noRk:true}),{x:ox-20,z:oz-5.5,route:loop([[ox-20,oz-5.5],[ox+20,oz-5.5],[ox+20,oz+5.5],[ox-20,oz+5.5]]),speed:1.2}));}
+  for(const [zn,i] of [['bajo',9],['urba',10],['lujo',11],['valle',12],['finan',13]]){const [ox,oz]=DIST[zn];L.push(npcMake(sc,Object.assign(crowdLook(i),{noRk:true}),{x:ox-20,z:oz-5.5,route:loop([[ox-20,oz-5.5],[ox+20,oz-5.5],[ox+20,oz+5.5],[ox-20,oz+5.5]]),speed:1.2}));}
   if(CHARS.galan){const g=Object.assign({},CHARS.galan,{noRk:true,name:'',num:null,shirt:'#f2f2f2',shirt2:'#f2711c',pattern:''});
     L.push(npcMake(sc,g,{x:16,z:-5.5,route:loop([[16,-5.5],[0,-5.5],[0,5.5],[16,5.5]]),speed:1.2,label:'Ale Galán',sub:'jugador profesional'}));}
   return L;}
@@ -3502,7 +3502,7 @@ function cityNPCs(sc){const L=[],loop=(pts)=>pts.map(([x,z])=>({x,z}));
 // ---- el mapa completo: los cuatro barrios juntos, calles que los unen y la autopista ----
 function allBlds(){const out=[];for(const zn of DORDER){const [ox,oz]=DIST[zn];for(const b of zoneBlds(zn))out.push(Object.assign({},b,{zone:zn,key:zn+':'+b.id,box:[b.box[0]+ox,b.box[1]+oz,b.box[2]+ox,b.box[3]+oz],door:[b.door[0]+ox,b.door[1]+oz]}));}return out;}
 function zoneAt(x,z){let best='centro',bd=1e9;for(const zn of DORDER){const [ox,oz]=DIST[zn],d=Math.max(Math.abs(x-ox)/36,Math.abs(z-oz)/26);if(d<bd){bd=d;best=zn;}}return best;}
-const HWY_X=150,MAPB=[-HWY_X,-24,HWY_X,77];
+const HWY_X=150,MAPB=[-HWY_X,-31,HWY_X,77];
 function buildBarrio3(){
   const T=THREE,sc=new T.Scene();sc.background=skyTex();sc.fog=new T.Fog(0xcfdde8,60,170);cityEnv(sc);
   sc.add(new T.HemisphereLight(0xdfeeff,0x6f6a5a,0.85));{const gl=new T.Sprite(new T.SpriteMaterial({map:cTex(128,128,(g,w,h)=>{const gr=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);gr.addColorStop(0,'rgba(255,255,240,1)');gr.addColorStop(0.15,'rgba(255,245,210,0.9)');gr.addColorStop(1,'rgba(255,230,180,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}),blending:T.AdditiveBlending,depthWrite:false,fog:false}));gl.position.set(-90,70,-140);gl.scale.set(45,45,1);sc.add(gl);}
@@ -3511,8 +3511,17 @@ function buildBarrio3(){
   const box=(x0,z0,x1,z1,y0,y1,m)=>{const e=new T.Mesh(new T.BoxGeometry(x1-x0,y1-y0,z1-z0),m);e.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);e.receiveShadow=true;sc.add(e);return e;};
   box(-HWY_X-40,-90,HWY_X+40,80,-0.2,0,texM('cesped',120,70));
   // calles entre barrios (prolongan las dos calles de cada barrio) y carretera a Marina Real
-  const asf=texM('asfalto',6,1.2);for(const zc of [-5.5,5.5])for(const [x0,x1] of [[-41,-31],[31,41]]){box(x0,zc-1.7,x1,zc+1.7,0,0.01,asf);}
-  box(34.3,3.8,37.7,50.2,0,0.01,texM('asfalto',1.2,16));box(30.5,44.8,37.7,48.2,0,0.01,asf);
+  const asf=texM('asfalto',6,1.2),asfV=texM('asfalto',1.2,30),asfH=texM('asfalto',60,1.2),lm=MS(0xf2f2f2);
+  // calles de cada fila unidas entre ciudades
+  for(const oz of [0,52])for(const zc of [-5.5,5.5])for(const [x0,x1] of [[-41,-31],[31,41]])box(x0,oz+zc-1.7,x1,oz+zc+1.7,0,0.01,asf);
+  // avenidas norte-sur entre ciudades y en los bordes, y ronda norte
+  for(const xc of [-108,-36,36,108]){box(xc-1.9,-30,xc+1.9,62,0,0.011,asfV);for(let z=-28;z<60;z+=5)box(xc-0.08,z,xc+0.08,z+2.5,0.012,0.015,lm);}
+  box(-109.9,-31.9,109.9,-28.1,0,0.011,asfH);for(let x=-106;x<106;x+=5)box(x,-30.08,x+2.5,-29.92,0.012,0.015,lm);
+  for(const oz of [0,52])for(const zc of [-5.5,5.5])for(const [x0,x1] of [[-108,-103],[103,108]])box(x0,oz+zc-1.7,x1,oz+zc+1.7,0,0.01,asf);
+  // mar y playa a lo largo de toda la costa sur
+  {const sea=new T.Mesh(new T.PlaneGeometry(420,120),new T.MeshPhysicalMaterial({color:0x1a6ea8,roughness:0.08,metalness:0.2,clearcoat:1}));sea.rotation.x=-Math.PI/2;sea.position.set(0,0.02,140);sc.add(sea);
+    const sand=new T.Mesh(new T.PlaneGeometry(420,8),MS(0xe9d8a6,{roughness:1}));sand.rotation.x=-Math.PI/2;sand.position.set(0,0.015,80);sc.add(sand);
+    for(let i=0;i<7;i++){const y=new T.Group();const hull=new T.Mesh(new T.BoxGeometry(2.4,1.1,9),MS(0xf8f9fa,{roughness:0.3}));hull.position.y=0.5;y.add(hull);const cab=new T.Mesh(new T.BoxGeometry(1.8,1,4),MS(0x1b263b,{roughness:0.2,metalness:0.4}));cab.position.set(0,1.4,-0.5);y.add(cab);y.position.set(-90+i*30,0,95+(i%2)*10);y.rotation.y=0.3*(i%3-1);sc.add(y);}}
   // autopista a otras ciudades por los dos lados
   const hw=texM('asfalto',40,2);for(const sg of [-1,1]){const x0=sg<0?-HWY_X:103,x1=sg<0?-103:HWY_X;box(x0,-7.2,x1,7.2,0,0.012,hw);
     const lm=MS(0xf2f2f2);for(let x=x0;x<x1;x+=5)box(x,-0.08,x+2.5,0.08,0.013,0.016,lm);for(const zz of [-7.4,7.4])box(x0,zz-0.12,x1,zz+0.12,0,0.5,MS(0x9aa0a6,{metalness:0.5}));
@@ -3613,7 +3622,11 @@ const HOMES=[
   {id:'estudio',zone:'bajo',n:'Estudio en Barrio Sur',p:3000,w:6,d:5,wall:'#cfc6b8',floor:'#8d8d8d',slots:[['suelo',-1.6,-1.2,0],['pared',0,-2.4,0],['peq',2.2,1.4,0]]},
   {id:'piso_sur',zone:'bajo',n:'Piso reformado',p:8000,w:8,d:6,wall:'#e3dccf',floor:'#a68a64',slots:[['suelo',-2.5,-1.6,0],['suelo',1.6,-1.6,0],['pared',0,-2.9,0],['peq',-3.2,1.8,0],['peq',3.2,1.8,0]]},
   {id:'chalet',zone:'urba',n:'Chalet con piscina',p:110000,w:16,d:11,wall:'#f8f4ec',floor:'#d6ccc2',slots:[['suelo',-5.5,-3.6,0],['suelo',-1.5,-3.6,0],['suelo',3,-3.6,0],['suelo',6,1.5,Math.PI/2],['suelo',-5,2.2,0],['suelo',0,2.6,0],['pared',-4,-5.4,0],['pared',0.5,-5.4,0],['pared',5,-5.4,0],['peq',-7.2,4.4,0],['peq',-7.2,0,0],['peq',7.2,4.4,0],['peq',3,4.4,0]]},
-  {id:'villa',zone:'lujo',n:'Villa con pista de pádel',p:450000,w:22,d:14,wall:'#f1f1f1',floor:'#e9ecef',slots:[['suelo',-8,-5,0],['suelo',-4,-5,0],['suelo',0,-5,0],['suelo',4,-5,0],['suelo',8,-5,0],['suelo',9,1,Math.PI/2],['suelo',-8,2,0],['suelo',-3,2.5,0],['pared',-7,-6.9,0],['pared',-2,-6.9,0],['pared',3,-6.9,0],['pared',8,-6.9,0],['peq',-10.2,6,0],['peq',-10.2,0,0],['peq',10.2,6,0],['peq',0,6,0],['peq',4,6,0]]}];
+  {id:'villa',zone:'lujo',n:'Villa con pista de pádel',p:450000,w:22,d:14,wall:'#f1f1f1',floor:'#e9ecef',slots:[['suelo',-8,-5,0],['suelo',-4,-5,0],['suelo',0,-5,0],['suelo',4,-5,0],['suelo',8,-5,0],['suelo',9,1,Math.PI/2],['suelo',-8,2,0],['suelo',-3,2.5,0],['pared',-7,-6.9,0],['pared',-2,-6.9,0],['pared',3,-6.9,0],['pared',8,-6.9,0],['peq',-10.2,6,0],['peq',-10.2,0,0],['peq',10.2,6,0],['peq',0,6,0],['peq',4,6,0]]},
+  {id:'casita',zone:'valle',n:'Casita de pueblo',p:12000,w:9,d:7,wall:'#f3e9d2',floor:'#a47148',slots:[['suelo',-2.6,-2,0],['suelo',1.8,-2,0],['pared',-1,-3.4,0],['pared',2.5,-3.4,0],['peq',-3.7,2.3,0],['peq',3.7,2.3,0]]},
+  {id:'masia',zone:'valle',n:'Masía con huerto',p:45000,w:13,d:9,wall:'#efe3c8',floor:'#8d6e63',slots:[['suelo',-4.5,-2.8,0],['suelo',-0.5,-2.8,0],['suelo',3.8,-2.8,0],['suelo',4.5,1.5,Math.PI/2],['pared',-3,-4.4,0],['pared',1.5,-4.4,0],['peq',-5.8,3.6,0],['peq',5.8,3.6,0],['peq',0,3.4,0]]},
+  {id:'loft',zone:'finan',n:'Loft en rascacielos',p:90000,w:14,d:9,wall:'#2b2d42',floor:'#ced4da',slots:[['suelo',-5,-2.8,0],['suelo',-1,-2.8,0],['suelo',3.5,-2.8,0],['suelo',5,1.6,Math.PI/2],['pared',-3,-4.4,0],['pared',2,-4.4,0],['peq',-6.2,3.6,0],['peq',6.2,3.6,0],['peq',0,3.4,0]]},
+  {id:'penthouse',zone:'finan',n:'Penthouse en la planta 60',p:600000,w:24,d:15,wall:'#111827',floor:'#e5e7eb',slots:[['suelo',-9,-5.5,0],['suelo',-5,-5.5,0],['suelo',-1,-5.5,0],['suelo',3,-5.5,0],['suelo',7,-5.5,0],['suelo',10,1,Math.PI/2],['suelo',-9,2.5,0],['suelo',-4,3,0],['pared',-8,-7.4,0],['pared',-3,-7.4,0],['pared',2,-7.4,0],['pared',7,-7.4,0],['peq',-11.2,6.5,0],['peq',-11.2,0,0],['peq',11.2,6.5,0],['peq',0,6.5,0],['peq',4,6.5,0]]}];
 const OPEN_MAX=2;
 const CARS=[{id:'basico',n:'Coche básico',p:0,c:0x8d99ae},{id:'utilitario',n:'Utilitario de segunda mano',p:3000,c:0x9d0208},{id:'compacto',n:'Compacto',p:9000,c:0x1d3557},{id:'berlina',n:'Berlina',p:22000,c:0x6c757d},
   {id:'suv',n:'SUV familiar',p:38000,c:0xe9ecef},{id:'deportivo',n:'Deportivo',p:90000,c:0xffb703},{id:'super',n:'Superdeportivo',p:250000,c:0xd00000}];
@@ -3625,6 +3638,8 @@ const ZONES={
   bajo:{n:'Barrio Sur',sub:'barrio humilde',tier:0,club:'Pista municipal Barrio Sur',prize:0.6,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{ropa:'Mercadillo',padel:'Bazar deportivo',muebles:'Muebles de segunda mano',estacion:'Parada de bus'}},
   centro:{n:'Centro',sub:'tu barrio de siempre',tier:1,club:'Bela Pádel Club',prize:1,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{padel:'La Orden del Friki – Pádel',estacion:'Estación'}},
   urba:{n:'Urbanización Los Pinos',sub:'chalets y zonas verdes',tier:2,club:'Club Los Pinos',prize:1.3,ids:['casa','club','coches','ropa','padel','muebles','estacion'],names:{coches:'Concesionario',ropa:'Boutique deportiva',padel:'Pro Shop Los Pinos',muebles:'Hogar y Jardín',estacion:'Parada de bus'}},
+  valle:{n:'Valle Verde',sub:'pueblo tranquilo de casas bajas',tier:1,club:'Club Valle Verde',prize:1.1,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{ropa:'Tienda del pueblo',padel:'Pádel Valle',muebles:'Carpintería',estacion:'Parada de bus'}},
+  finan:{n:'Distrito Financiero',sub:'rascacielos y oficinas',tier:3,club:'Sky Pádel Club',prize:1.6,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{ropa:'Galería de moda',padel:'Pádel Premium Store',muebles:'Interiorismo',inmo:'Inmobiliaria de lujo',estacion:'Metro'}},
   lujo:{n:'Marina Real',sub:'zona de lujo junto al mar',tier:3,club:'Real Club Marina',prize:1.8,ids:['casa','club','inmo','ropa','padel','muebles','estacion'],names:{ropa:'Boutique de lujo',padel:'Marina Pro Pádel',muebles:'Diseño y Arte',estacion:'Parada de bus'}}};
 const ZBASE={casa:'Tu casa',club:'Club',inmo:'Inmobiliaria',ropa:'Ropa',padel:'Tienda de pádel',muebles:'Muebles',estacion:'Estación',coches:'Concesionario'};
 const ZCOL={casa:'#e9c46a',club:'#2a9d8f',inmo:'#8ecae6',ropa:'#f4a261',padel:'#3a1d5c',muebles:'#c08552',estacion:'#adb5bd',coches:'#495057'};
@@ -3871,7 +3886,7 @@ function barCollide(p,r){
   for(const s of solids){const cx=clamp(p.x,s[0],s[2]),cz=clamp(p.z,s[1],s[3]),dx=p.x-cx,dz=p.z-cz,d=Math.hypot(dx,dz);
     if(d<r){if(d>1e-6){p.x=cx+dx/d*r;p.z=cz+dz/d*r;}else{const l=[p.x-s[0],s[2]-p.x,p.z-s[1],s[3]-p.z],m=Math.min(...l);if(m===l[0])p.x=s[0]-r;else if(m===l[1])p.x=s[2]+r;else if(m===l[2])p.z=s[1]-r;else p.z=s[3]+r;}}}
   if(!D){for(const zn of DORDER){const [ox,oz]=DIST[zn],dx=p.x-ox,dz=p.z-oz,d=Math.hypot(dx,dz);if(d<3.2){const k=3.2/Math.max(d,1e-3);p.x=ox+dx*k;p.z=oz+dz*k;}}
-    if(p.z>76&&Math.abs(p.x)<60)p.z=76;}
+    if(p.z>77&&Math.abs(p.x)<112)p.z=77;}
   p.x=clamp(p.x,bounds[0],bounds[2]);p.z=clamp(p.z,bounds[1],bounds[3]);}
 function barZoneCheck(){const z=zoneAt(BAR.pos.x,BAR.pos.z);if(CAR&&z!==CAR.zone){CAR.zone=z;barToast('Entras en '+ZONES[z].n);clearTimeout(barZoneCheck.t);barZoneCheck.t=setTimeout(()=>saveCar(),1500);}}
 function barToast2(t){try{barToast(t);}catch(e){}}
@@ -4021,7 +4036,7 @@ function barRefresh(id){const p=$('#barPanel');p.dataset.id=id;
 function barViajarHTML(){const z=curZone(),car=CAR.carCur&&carBy(CAR.carCur);
   let h=`<h2>Viajar</h2>${barMoney()}<div class="inf">Estás en <b>${esc(ZONES[z].n)}</b>. ${car?'Vas en tu '+esc(car.n)+': gratis.':'Sin coche vas en autobús ('+eur(BUS_FARE)+'). Compra un coche en el concesionario de la Urbanización Los Pinos.'}</div>`;
   h+=`<button class="big pri" data-x="torneos">🏆 Ir a los torneos</button><div class="barGrid">`;
-  for(const k of ['bajo','centro','urba','lujo']){const Z=ZONES[k];h+=`<button class="spb${k===z?' on':''}" data-x="zone" data-id="${k}"><b>${esc(Z.n)}</b> · ${esc(Z.sub)}<br>${k===z?'✔ Estás aquí':car?'Ir con tu coche':'Ir en autobús · '+eur(BUS_FARE)}</button>`;}
+  for(const k of DORDER){const Z=ZONES[k];h+=`<button class="spb${k===z?' on':''}" data-x="zone" data-id="${k}"><b>${esc(Z.n)}</b> · ${esc(Z.sub)}<br>${k===z?'✔ Estás aquí':car?'Ir con tu coche':'Ir en autobús · '+eur(BUS_FARE)}</button>`;}
   return h+'</div>';}
 function barTravel(z){if(!ZONES[z]||z===curZone())return false;const car=CAR.carCur&&carBy(CAR.carCur);
   if(!car){if(CAR.money<BUS_FARE){barToast('No te llega para el autobús');return false;}CAR.money-=BUS_FARE;}
