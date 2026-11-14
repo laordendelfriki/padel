@@ -220,5 +220,19 @@ test('llamar al coche y móvil con torneos, compañeros y mapa',async()=>withCar
   assert(r.dist<5&&r.abierto&&r.mates==='Compañeros'&&r.mapa&&r.fuera,'resultado '+JSON.stringify(r));
 }));
 
+test('tecla M abre el mapa, apuesta en pista pública y edificios de relleno',async()=>withCar({},async({page})=>{
+  await page.evaluate(async()=>{window.__padel.barrioEnter();await new Promise(r=>setTimeout(r,800));});
+  await page.keyboard.press('KeyM');const mapa=await page.evaluate(()=>document.querySelector('#barMap').classList.contains('on')&&!!document.querySelector('#barMap .ph-map em'));
+  await page.keyboard.press('KeyM');const cerrado=await page.evaluate(()=>!document.querySelector('#barMap').classList.contains('on'));
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,C=P.CAR,w=ms=>new Promise(r=>setTimeout(r,ms));
+    const fillers=(P.BARFILL||[]).length;
+    // ir a la pista pública del parque y apostar 100 €
+    const c=P.COURTS[1];B.pos={x:c.x,z:c.z+2};await w(500);const cerca=!!(B.near&&B.near.act==='court:1');P.barAction('court:1');
+    C.money=1000;document.querySelector('#barPanel [data-x=bet][data-id="1|100"]').click();await w(300);
+    const desc=C.money,partido=!!(P.S&&P.S.stake===100);P.S.over={winner:0};P.showEnd();const gana=C.money;P.quitToMenu();await w(600);
+    return {fillers,cerca,desc,partido,gana,vuelve:B.on&&Math.hypot(B.pos.x-c.x,B.pos.z-c.z)<10};});
+  assert(mapa&&cerrado&&r.fillers>=40&&r.cerca&&r.desc===900&&r.partido&&r.gana===1100&&r.vuelve,'resultado '+JSON.stringify({mapa,cerrado,...r}));
+}));
+
 module.exports={withCar};
 if(require.main===module)run();
