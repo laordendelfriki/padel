@@ -244,5 +244,13 @@ test('gráficos realistas: texturas de foto, cielo real y selector de calidad',a
   assert(r.nAlta>=12&&r.real&&r.cielo&&r.nBaja===0&&r.sigue&&r.nMedia>=12&&r.ancho===512&&r.gfx==='media'&&!errors.length,'resultado '+JSON.stringify(r)+' '+errors.join('|'));
 }));
 
+test('jugadores realistas: relieve de piel y tela, sombreado propio y luz de estadio',async()=>withCar({},async({page,errors})=>{
+  await page.waitForFunction(()=>window.__padel.HUMREADY()&&window.__padel.HUMIMG('piel_n')&&window.__padel.HUMIMG('tela_n'),null,{timeout:40000});
+  const r=await page.evaluate(()=>{const P=window.__padel,C=Object.assign({},P.CHARS.galan),pl=P.mkHuman3(C,new THREE.Scene());let nmap=0,vcol=0,mallas=0;
+    pl.g.traverse(o=>{if(o.isSkinnedMesh){mallas++;if(o.material.normalMap)nmap++;if(o.geometry.attributes.color)vcol++;}});
+    const piel=pl.body.material.normalMap&&pl.body.material.vertexColors;P.disposePlayer3(pl);return {nmap,vcol,mallas,piel:!!piel,env:!!(P.G3.scene&&P.G3.scene.environment)};});
+  assert(r.piel&&r.nmap>=4&&r.vcol>=5&&r.env&&!errors.length,'resultado '+JSON.stringify(r)+' '+errors.join('|'));
+}));
+
 module.exports={withCar};
 if(require.main===module)run();

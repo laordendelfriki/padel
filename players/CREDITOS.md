@@ -9,3 +9,4 @@ salen de los recursos de **MakeHuman** (www.makehumancommunity.org), publicados 
 - La textura del iris, la barba, la ropa y las animaciones están hechas para este juego.
 
 El paquete se genera con `tools/build_humans.py` a partir de esos archivos.
+- Los relieves de la tela, la sarga y los poros de la piel (`tela_n`, `sarga_n`, `piel_n`) están generados para este juego.
