@@ -234,5 +234,15 @@ test('tecla M abre el mapa, apuesta en pista pública y edificios de relleno',as
   assert(mapa&&cerrado&&r.fillers>=40&&r.cerca&&r.desc===900&&r.partido&&r.gana===1100&&r.vuelve,'resultado '+JSON.stringify({mapa,cerrado,...r}));
 }));
 
+test('gráficos realistas: texturas de foto, cielo real y selector de calidad',async()=>withCar({},async({page,errors})=>{
+  const r=await page.evaluate(async()=>{const P=window.__padel,B=P.BAR,w=ms=>new Promise(r=>setTimeout(r,ms));
+    P.gfxSet('alta');await P.realTexLoad();const nAlta=Object.keys(P.RTEX.img).length;
+    P.barrioEnter();await w(800);let real=false;B.scene.traverse(o=>{if(o.material&&o.material.normalMap)real=true;});const cielo=!!(B.scene.background&&B.scene.background.isTexture&&B.scene.background.mapping===THREE.EquirectangularReflectionMapping);
+    P.gfxSet('baja');await P.realTexLoad();await w(800);const nBaja=Object.keys(P.RTEX.img).length,sigue=B.on&&!!B.scene;
+    P.gfxSet('media');await P.realTexLoad();await w(800);const nMedia=Object.keys(P.RTEX.img).length,ancho=P.RTEX.img.cesped&&P.RTEX.img.cesped.naturalWidth;
+    return {nAlta,real,cielo,nBaja,sigue,nMedia,ancho,gfx:P.GFX};});
+  assert(r.nAlta>=12&&r.real&&r.cielo&&r.nBaja===0&&r.sigue&&r.nMedia>=12&&r.ancho===512&&r.gfx==='media'&&!errors.length,'resultado '+JSON.stringify(r)+' '+errors.join('|'));
+}));
+
 module.exports={withCar};
 if(require.main===module)run();
